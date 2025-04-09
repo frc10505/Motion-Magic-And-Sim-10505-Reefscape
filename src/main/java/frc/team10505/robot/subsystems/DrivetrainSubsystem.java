@@ -163,6 +163,43 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
         }
     }
 
+    public DrivetrainSubsystem(
+        CommandJoystick joystick,
+        SwerveDrivetrainConstants drivetrainConstants,
+        SwerveModuleConstants<?, ?, ?>... modules) {
+    super(drivetrainConstants, modules);
+    if (Utils.isSimulation()) {
+        this.joystick = joystick;
+        startSimThread();
+    }
+}
+public DrivetrainSubsystem(
+    CommandJoystick joystick,
+        SwerveDrivetrainConstants drivetrainConstants,
+        double odometryUpdateFrequency,
+        SwerveModuleConstants<?, ?, ?>... modules) {
+    super(drivetrainConstants, odometryUpdateFrequency, modules);
+    if (Utils.isSimulation()) {
+        this.joystick = joystick;
+        startSimThread();
+    }
+}
+
+public DrivetrainSubsystem(
+    CommandJoystick joystick,
+        SwerveDrivetrainConstants drivetrainConstants,
+        double odometryUpdateFrequency,
+        Matrix<N3, N1> odometryStandardDeviation,
+        Matrix<N3, N1> visionStandardDeviation,
+        SwerveModuleConstants<?, ?, ?>... modules) {
+    super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation,
+            modules);
+    if (Utils.isSimulation()) {
+        this.joystick = joystick;
+        startSimThread();
+    }
+}
+
     /**
      * Returns a command that applies the specified control request to this swerve
      * drivetrain.

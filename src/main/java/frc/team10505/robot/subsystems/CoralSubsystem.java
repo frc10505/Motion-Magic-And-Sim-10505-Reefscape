@@ -30,7 +30,7 @@ import au.grapplerobotics.LaserCan;
 
 public class CoralSubsystem extends SubsystemBase {
 
-    private final CommandJoystick monkeyJoystick = new CommandJoystick(0);
+    private  CommandJoystick monkeyJoystick = new CommandJoystick(0);
     // Motor controllers
     private final SparkMax intakeLeft = new SparkMax(kLeftMotorId, MotorType.kBrushless);
     private final TalonFX simIntakeLeft = new TalonFX(4);
@@ -82,6 +82,11 @@ public class CoralSubsystem extends SubsystemBase {
         SmartDashboard.putData("coralIntake", coralIntakeMech);
         configCoralSubsys();
     }
+    public CoralSubsystem(CommandJoystick monkeyJoystick) {
+        this.monkeyJoystick = monkeyJoystick;
+        SmartDashboard.putData("coralIntake", coralIntakeMech);
+        configCoralSubsys();
+    }
 
     /* Calculations */
     public boolean inSensor() {
@@ -92,9 +97,7 @@ public class CoralSubsystem extends SubsystemBase {
             LaserCan.Measurement inMeas = inLaser.getMeasurement();
             return (inMeas.distance_mm < 50.0 && inMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
 
-            // LaserCan.Measurement inMeas = inLaser.getMeasurement();
-            // return (inMeas.distance_mm < 50.0 && inMeas.status ==
-            // LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
+          
         }
     }
 
@@ -193,125 +196,7 @@ public class CoralSubsystem extends SubsystemBase {
 
 
 
-    // /* Commands to referense */
-    // public Command intake() {
-    //     if (Utils.isSimulation()) {
-    //         return runEnd(() -> {
-    // return simIntakeLeft.set(kIntakeSpeed);
-    //             simIntakeRight.set(-kIntakeSpeed);
-    //             simIntakeSigma.set(-kIntakeSpeed);
-    //             simIntakeSkibidi.set(kIntakeSpeed);
-    //         },
-    //                 () -> {
-
-    //                     simIntakeLeft.setVoltage(0);
-    //                     simIntakeRight.setVoltage(0);
-    //                 });
-    //     } else {
-
-    //         return runEnd(() -> {
-    //             intakeLeft.set(kOutakeSpeed);
-    //             intakeRight.set(kOutakeSpeed);
-    //             intakeSigma.set(kOutakeSpeed);
-    //             intakeSkibidi.set(kOutakeSpeed);
-    //         },
-    //                 () -> {
-    //                     intakeLeft.set(0);// kys (keep yourself safe)
-    //                     intakeRight.set(0);// kys (keep yourself safe)
-    //                 });
-    //     }
-    // }
-
-    // public Command output() {
-    //     if (Utils.isSimulation()) {
-    //         return runEnd(() -> {
-    //             simIntakeLeft.setVoltage(kOutakeSpeed);
-    //             simIntakeRight.setVoltage(kOutakeSpeed);
-    //         },
-    //                 () -> {
-    //                     simIntakeLeft.setVoltage(0);// kys (keep yourself safe)
-    //                     simIntakeRight.setVoltage(0);// kys
-    //                 });
-    //     } else {
-
-    //         return runEnd(() -> {
-    //             intakeLeft.set(kOutakeSpeed);
-    //             intakeRight.set(kOutakeSpeed);
-    //         },
-    //                 () -> {
-    //                     intakeLeft.set(0);// kys (keep yourself safe)
-    //                     intakeRight.set(0);// kys (keep yourself safe)
-    //                 });
-    //     }
-    // }
-
-    // public Command setOutput() {
-    //     if (Utils.isSimulation()) {
-    //         return runOnce(() -> {
-    //             simIntakeLeft.setVoltage(kOutakeSpeed);
-    //             simIntakeRight.setVoltage(kOutakeSpeed);
-
-    //         });
-    //     } else {
-    //         return runOnce(() -> {
-    //             intakeLeft.set(kOutakeSpeed);
-    //             intakeRight.set(kOutakeSpeed);
-    //         });
-    //     }
-    // }
-
-    // public Command setOutputTop() {
-    //     return runOnce(() -> {
-    //         intakeLeft.set(kOutakeTopSpeed);
-    //         intakeRight.set(kOutakeTopSpeed);
-    //     });
-    // }
-
-    // public Command outputTop() {
-    //     return runEnd(() -> {
-    //         intakeLeft.set(kOutakeTopSpeed);
-    //         intakeRight.set(kOutakeTopSpeed);
-    //     },
-    //             () -> {
-    //                 intakeLeft.set(0);
-    //                 intakeRight.set(0);
-    //             });
-    // }
-
    
-
-    // public Command stop() {
-    //     return run(() -> {
-    //         intakeLeft.set(0);
-    //         intakeRight.set(0);
-    //     });
-    // }
-
-    // public Command setStop() {
-    //     return runOnce(() -> {
-    //         intakeLeft.set(0);
-    //         intakeRight.set(0);
-    //     });
-    // }
-
-    // public Command slow() {
-    //     return runEnd(() -> {
-    //         intakeLeft.set(0.05);
-    //         intakeRight.set(0.05);
-    //     },
-    //             () -> {
-    //                 intakeLeft.set(0);
-    //                 intakeRight.set(0);
-    //             });
-    // }
-
-  
-    // public Command autoSetIntake() {
-    //     return runOnce(() -> {
-    //         intakeLeft.set(kIntakeSpeed);
-    //         intakeRight.set(kIntakeSpeed);
-    //     });
-    // }
 
     @Override
     public void periodic() {
