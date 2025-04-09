@@ -1,0 +1,61 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Test path(drive forward a smidgeon)"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "autoBombsAway"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "autonDetonateFirst"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "autonDetonateSecond"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "autonDetonateThird"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "autonRegurgitateAlgaeFirst"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "autonRegurgitateAlgaeSecond"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "autonTakeCover"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
