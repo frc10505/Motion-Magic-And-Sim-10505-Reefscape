@@ -20,8 +20,6 @@ import edu.wpi.first.cscore.CvSource;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -35,9 +33,6 @@ import frc.team10505.robot.subsystems.ElevatorSubsystem;
 import frc.team10505.robot.subsystems.AlgaeSubsystem;
 import frc.team10505.robot.subsystems.CoralSubsystem;
 import static edu.wpi.first.units.Units.*;
-import static edu.wpi.first.wpilibj2.command.Commands.runEnd;
-import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
-import static frc.team10505.robot.Constants.DrivetrainConstants.leftDriveLaserDistance;
 import static frc.team10505.robot.Constants.OperatorInterfaceConstants.*;
 
 import org.opencv.core.Mat;
@@ -70,28 +65,35 @@ public class RobotContainer {
         private final CommandXboxController xboxController = new CommandXboxController(0);
         private final CommandXboxController xboxController2 = new CommandXboxController(kControlPanelPort);
 
-        private final CommandJoystick joystick = new CommandJoystick(2);
-        private final CommandJoystick joystick2 = new CommandJoystick(3);
+        private final CommandJoystick joystick = new CommandJoystick(0);
+        private final CommandJoystick joystick2 = new CommandJoystick(1);
 
         /* Subsystems */
-        private final DrivetrainSubsystem drivetrainSubsys = TunerConstants.createDrivetrain();
+        private final DrivetrainSubsystem drivetrainSubsys;
         private final AlgaeSubsystem algaeSubsys = new AlgaeSubsystem();
-        private final CoralSubsystem coralSubsys = new CoralSubsystem();
+        private final CoralSubsystem coralSubsys;
         private final ElevatorSubsystem elevatorSubsys = new ElevatorSubsystem();
 
         /* Superstructure */
-        private final Superstructure superStructure = new Superstructure(coralSubsys, algaeSubsys, elevatorSubsys,
-                        drivetrainSubsys);
-
+        private final Superstructure superStructure;
         /* Autonomous */
         // private final SendableChooser<Command> autoChooser;
         private final SendableChooser<Command> svsuAutoChooser;
 
         private final SendableChooser<Double> polarityChooser = new SendableChooser<>();
-        // private final SendableChooser<Double> rightAutoAlignSpeedMULTIPLIER = new SendableChooser<>();
-        // private final SendableChooser<Double> leftAutoAlignSpeedMULTIPLIER = new SendableChooser<>();
 
         public RobotContainer() {
+                if (Utils.isSimulation()) {
+                        drivetrainSubsys = TunerConstants.createDrivetrain(joystick);
+                        coralSubsys = new CoralSubsystem(joystick);
+
+                } else {
+                        drivetrainSubsys = TunerConstants.createDrivetrain();
+                        coralSubsys = new CoralSubsystem();
+                }
+
+                superStructure = new Superstructure(coralSubsys, algaeSubsys, elevatorSubsys,
+                                drivetrainSubsys);
 
                 NamedCommands.registerCommand("Test", Commands.print("auto command stuff is working"));
 
@@ -144,27 +146,6 @@ public class RobotContainer {
                 polarityChooser.addOption("positive", 1.0);
                 polarityChooser.addOption("Negative", -1.0);
 
-                // // literally just use for testing/tuning alignment speed
-                // SmartDashboard.putData("right auto align speed multiplier", rightAutoAlignSpeedMULTIPLIER);
-                // rightAutoAlignSpeedMULTIPLIER.setDefaultOption("1", 1.0);
-
-                // rightAutoAlignSpeedMULTIPLIER.addOption("0.95", 0.95);
-                // rightAutoAlignSpeedMULTIPLIER.addOption("0.9", 0.9);
-                // rightAutoAlignSpeedMULTIPLIER.addOption("0.7", 0.7);
-                // rightAutoAlignSpeedMULTIPLIER.addOption("0.75", 0.75);
-                // rightAutoAlignSpeedMULTIPLIER.addOption("0.8", 0.8);
-                // rightAutoAlignSpeedMULTIPLIER.addOption("0.85", 0.85);
-
-                // SmartDashboard.putData("left auto align speed chooser", leftAutoAlignSpeedMULTIPLIER);
-                // rightAutoAlignSpeedMULTIPLIER.setDefaultOption("1", 1.0);
-
-                // leftAutoAlignSpeedMULTIPLIER.addOption("0.95", 0.95);
-                // leftAutoAlignSpeedMULTIPLIER.addOption("0.9", 0.9);
-                // leftAutoAlignSpeedMULTIPLIER.addOption("0.7", 0.7);
-                // leftAutoAlignSpeedMULTIPLIER.addOption("0.75", 0.75);
-                // leftAutoAlignSpeedMULTIPLIER.addOption("0.8", 0.8);
-                // leftAutoAlignSpeedMULTIPLIER.addOption("0.85", 0.85);
-
                 configDefaultCommands();
                 configButtonBindings();
                 configAutonomous();
@@ -175,29 +156,27 @@ public class RobotContainer {
          * commands for the subsytems.
          */
         private void configDefaultCommands() {
-                if(Utils.isSimulation()){
+                if (Utils.isSimulation()) {
 
                         drivetrainSubsys.setDefaultCommand(drivetrainSubsys.applyRequest(() -> drive
-                        .withVelocityX(-xboxController.getLeftX() * polarityChooser.getSelected()
-                                        * 0.8 * MaxSpeed) // Drive
-                        .withVelocityY(xboxController.getLeftY() * polarityChooser.getSelected() * // was
-                                                                                                    // negative
-                                        0.8 * MaxSpeed) // Drive left with negative X (left)
-                        .withRotationalRate(xboxController2.getLeftY() * 3.2 * MaxAngularRate))); // 2.5
-
-                        
+                                        .withVelocityX(-xboxController.getLeftX() * polarityChooser.getSelected()
+                                                        * 0.8 * MaxSpeed) // Drive
+                                        .withVelocityY(xboxController.getLeftY() * polarityChooser.getSelected() * // was
+                                                                                                                   // negative
+                                                        0.8 * MaxSpeed) // Drive left with negative X (left)
+                                        .withRotationalRate(xboxController2.getLeftY() * 3.2 * MaxAngularRate))); // 2.5
 
                 }
-                
-else {
-                drivetrainSubsys.setDefaultCommand(drivetrainSubsys.applyRequest(() -> drive
-                                .withVelocityX(-xboxController.getLeftY() * polarityChooser.getSelected()
-                                                * 0.8 * MaxSpeed) // Drive
-                                .withVelocityY(-xboxController.getLeftX() * polarityChooser.getSelected() * // was
-                                                                                                            // negative
-                                                0.8 * MaxSpeed) // Drive left with negative X (left)
-                                .withRotationalRate(-xboxController.getRightX() * 3.2 * MaxAngularRate))); // 2.5
-}
+
+                else {
+                        drivetrainSubsys.setDefaultCommand(drivetrainSubsys.applyRequest(() -> drive
+                                        .withVelocityX(-xboxController.getLeftY() * polarityChooser.getSelected()
+                                                        * 0.8 * MaxSpeed) // Drive
+                                        .withVelocityY(-xboxController.getLeftX() * polarityChooser.getSelected() * // was
+                                                                                                                    // negative
+                                                        0.8 * MaxSpeed) // Drive left with negative X (left)
+                                        .withRotationalRate(-xboxController.getRightX() * 3.2 * MaxAngularRate))); // 2.5
+                }
 
                 /* OLD joystick bindings */
                 // drivetrainSubsys.applyRequest(
@@ -217,7 +196,6 @@ else {
                 // // (left)
                 // ));
 
-                algaeSubsys.setDefaultCommand(algaeSubsys.holdAngle());
         }
 
         /**
@@ -226,132 +204,148 @@ else {
          */
         private void configButtonBindings() {
 
-                if(Utils.isSimulation()){
-                        joystick.button(1).onTrue(elevatorSubsys.setHeight(0));//coralSubsys.slowEndIntake());//
-                        joystick.button(2).onTrue(elevatorSubsys.setHeight(1));//coralSubsys.trough().until (() -> !coralSubsys.outSensor()));
+                if (Utils.isSimulation()) {
+                        joystick.button(1).onTrue(elevatorSubsys.setHeight(0));// coralSubsys.slowEndIntake());//
+                        joystick.button(2).onTrue(elevatorSubsys.setHeight(1));// coralSubsys.trough().until (() ->
+                                                                               // !coralSubsys.outSensor()));
                         joystick.button(3).onTrue(elevatorSubsys.setHeight(2));
                         joystick.button(4).onTrue(elevatorSubsys.setHeight(3));
 
+                        // joystick.button(1).onTrue(algaeSubsys.setAngle(-90));
+                        // joystick.button(2).onTrue(algaeSubsys.setAngle(-30));
+                        // joystick.button(3).onTrue(algaeSubsys.setAngle(0));
+                        // joystick.button(4).onTrue(algaeSubsys.setAngle(90));
 
+                        joystick2.button(3).whileTrue(coralSubsys.runIntake(-1));
+                        joystick2.button(4).whileTrue(coralSubsys.runIntake(3));
+                        joystick2.button(1).whileTrue(coralSubsys.runIntake(5));
 
-                }else{
-                // bindings for the xbox controller
-                xboxController.leftBumper().onTrue(algaeSubsys.intakeReverse()).onFalse(algaeSubsys.intakeStop());
-                xboxController.rightBumper().onTrue(algaeSubsys.intakeForward()).onFalse(superStructure.holdAlgae());
-                // xboxController.povDown().onTrue(superStructure.grabAlgae()).onFalse(superStructure.holdAlgae());
+                } else {
+                        // bindings for the xbox controller
+                        xboxController.leftBumper().onTrue(algaeSubsys.intakeReverse())
+                                        .onFalse(algaeSubsys.intakeStop());
+                        xboxController.rightBumper().onTrue(algaeSubsys.intakeForward())
+                                        .onFalse(superStructure.holdAlgae());
+                        // xboxController.povDown().onTrue(superStructure.grabAlgae()).onFalse(superStructure.holdAlgae());
 
-                xboxController.leftTrigger()
-                                .whileTrue(drivetrainSubsys.applyRequest(() -> drive
-                                                .withVelocityX(-xboxController.getLeftY()
-                                                                * polarityChooser.getSelected()
-                                                                * 0.3 * MaxSpeed) // Drive
-                                                .withVelocityY(-xboxController.getLeftX()
-                                                                * polarityChooser.getSelected() *
-                                                                0.3 * MaxSpeed) // Drive left with negative X (left)
-                                                .withRotationalRate(
-                                                                -xboxController.getRightX() * 0.7 * MaxAngularRate)));
-                xboxController.rightTrigger()
-                                .whileTrue(drivetrainSubsys.applyRequest(() -> drive
-                                                .withVelocityX(-xboxController.getLeftY()
-                                                                * polarityChooser.getSelected()
-                                                                * 1.2 * MaxSpeed) // Drive
-                                                .withVelocityY(-xboxController.getLeftX()
-                                                                * polarityChooser.getSelected() *
-                                                                1.2 * MaxSpeed) // Drive left with negative X (left)
-                                                .withRotationalRate(
-                                                                -xboxController.getRightX() * 3.2 * MaxAngularRate)));
+                        xboxController.leftTrigger()
+                                        .whileTrue(drivetrainSubsys.applyRequest(() -> drive
+                                                        .withVelocityX(-xboxController.getLeftY()
+                                                                        * polarityChooser.getSelected()
+                                                                        * 0.3 * MaxSpeed) // Drive
+                                                        .withVelocityY(-xboxController.getLeftX()
+                                                                        * polarityChooser.getSelected() *
+                                                                        0.3 * MaxSpeed) // Drive left with negative X
+                                                                                        // (left)
+                                                        .withRotationalRate(
+                                                                        -xboxController.getRightX() * 0.7
+                                                                                        * MaxAngularRate)));
+                        xboxController.rightTrigger()
+                                        .whileTrue(drivetrainSubsys.applyRequest(() -> drive
+                                                        .withVelocityX(-xboxController.getLeftY()
+                                                                        * polarityChooser.getSelected()
+                                                                        * 1.2 * MaxSpeed) // Drive
+                                                        .withVelocityY(-xboxController.getLeftX()
+                                                                        * polarityChooser.getSelected() *
+                                                                        1.2 * MaxSpeed) // Drive left with negative X
+                                                                                        // (left)
+                                                        .withRotationalRate(
+                                                                        -xboxController.getRightX() * 3.2
+                                                                                        * MaxAngularRate)));
 
-                xboxController.a().onTrue(algaeSubsys.setAngle(-18));
-                xboxController.b().onTrue(algaeSubsys.intakeForwardSlowest()).onFalse(algaeSubsys.intakeStop());
-                // setLights());
-                // resetPose());// onTrue(algaeSubsys.stopPivot());
-                xboxController.x().onTrue(algaeSubsys.setAngle(-90));
-                xboxController.y().onTrue(algaeSubsys.setAngle(10)); // 5
+                        xboxController.a().onTrue(algaeSubsys.setAngle(-18));
+                        xboxController.b().onTrue(algaeSubsys.intakeForwardSlowest()).onFalse(algaeSubsys.intakeStop());
+                        // setLights());
+                        // resetPose());// onTrue(algaeSubsys.stopPivot());
+                        xboxController.x().onTrue(algaeSubsys.setAngle(-90));
+                        xboxController.y().onTrue(algaeSubsys.setAngle(10)); // 5
 
-                xboxController.start().onTrue(resetGyro());
-                xboxController.back().onTrue(resetGyro180());// check which bindings
+                        xboxController.start().onTrue(resetGyro());
+                        xboxController.back().onTrue(resetGyro180());// check which bindings
 
-                // xboxController.l().onTrue(superStructure.grabAlgae()).onFalse(superStructure.holdAlgae());
+                        // xboxController.l().onTrue(superStructure.grabAlgae()).onFalse(superStructure.holdAlgae());
 
-                xboxController.povUp().whileTrue(
-                                drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(-0.4)
-                                                .withVelocityY(0.0)
-                                                .withRotationalRate(0.0)))
-                                .onFalse(drivetrainSubsys.stop());
+                        xboxController.povUp().whileTrue(
+                                        drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(-0.4)
+                                                        .withVelocityY(0.0)
+                                                        .withRotationalRate(0.0)))
+                                        .onFalse(drivetrainSubsys.stop());
 
-                xboxController.povDown().whileTrue(
-                                drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.4)
-                                                .withVelocityY(0.0)
-                                                .withRotationalRate(0.0)))
-                                .onFalse(drivetrainSubsys.stop());
+                        xboxController.povDown().whileTrue(
+                                        drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.4)
+                                                        .withVelocityY(0.0)
+                                                        .withRotationalRate(0.0)))
+                                        .onFalse(drivetrainSubsys.stop());
 
-                xboxController.povLeft().whileTrue(
-                                drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.0)
-                                                .withVelocityY(0.6 )//* leftAutoAlignSpeedMULTIPLIER.getSelected())
-                                                .withRotationalRate(0.0))
-                                                .until(() -> !drivetrainSubsys.seesLeftSensor())
-                // .andThen(
-                // setLeftRumbles())
-                );
+                        xboxController.povLeft().whileTrue(
+                                        drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.0)
+                                                        .withVelocityY(0.6)// *
+                                                                           // leftAutoAlignSpeedMULTIPLIER.getSelected())
+                                                        .withRotationalRate(0.0))
+                                                        .until(() -> !drivetrainSubsys.seesLeftSensor())
+                        // .andThen(
+                        // setLeftRumbles())
+                        );
 
-                xboxController.povRight().whileTrue(
-                                // rumblyRightAlign()
-                                drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.0)
-                                                .withVelocityY(-0.6)//75)// * rightAutoAlignSpeedMULTIPLIER.getSelected())
-                                                .withRotationalRate(0.0))
-                                                .until(() -> !drivetrainSubsys.seesRightSensor())
-                // .andThen(
-                // setRightRumbles())
-                );
+                        xboxController.povRight().whileTrue(
+                                        // rumblyRightAlign()
+                                        drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.0)
+                                                        .withVelocityY(-0.6)// 75)// *
+                                                                            // rightAutoAlignSpeedMULTIPLIER.getSelected())
+                                                        .withRotationalRate(0.0))
+                                                        .until(() -> !drivetrainSubsys.seesRightSensor())
+                        // .andThen(
+                        // setRightRumbles())
+                        );
 
-                // NEW joystick bindings
+                        // NEW joystick bindings
 
-                // joystick.trigger()
-                // .whileTrue(drivetrainSubsys.applyRequest(
-                // () -> drive.withVelocityX(-joystick.getY() * 0.2 *
-                // polarityChooser.getSelected() * MaxSpeed) // Drive
-                // .withVelocityY(-joystick.getX() * 0.2 * polarityChooser.getSelected() *
-                // MaxSpeed) // Drive
-                // // left
-                // // with
-                // // negative
-                // // X
-                // // (left)
-                // .withRotationalRate(-joystick.getTwist() * 0.5 * MaxAngularRate) // Drive
-                // // counterclockwise
-                // // with negative X
-                // // (left)
-                // ));
+                        // joystick.trigger()
+                        // .whileTrue(drivetrainSubsys.applyRequest(
+                        // () -> drive.withVelocityX(-joystick.getY() * 0.2 *
+                        // polarityChooser.getSelected() * MaxSpeed) // Drive
+                        // .withVelocityY(-joystick.getX() * 0.2 * polarityChooser.getSelected() *
+                        // MaxSpeed) // Drive
+                        // // left
+                        // // with
+                        // // negative
+                        // // X
+                        // // (left)
+                        // .withRotationalRate(-joystick.getTwist() * 0.5 * MaxAngularRate) // Drive
+                        // // counterclockwise
+                        // // with negative X
+                        // // (left)
+                        // ));
 
-                // joystick.button(12).onTrue(algaeSubsys.setAngle(-22));// -18
-                // joystick.button(9).onTrue(algaeSubsys.setAngle(90));//-90
-                // joystick.button(10).onTrue(algaeSubsys.setAngle(5));
+                        // joystick.button(12).onTrue(algaeSubsys.setAngle(-22));// -18
+                        // joystick.button(9).onTrue(algaeSubsys.setAngle(90));//-90
+                        // joystick.button(10).onTrue(algaeSubsys.setAngle(5));
 
-                // joystick.button(3).onTrue(algaeSubsys.intakeReverse()).onFalse(algaeSubsys.intakeStop());
-                // joystick.button(5).onTrue(algaeSubsys.intakeForward()).onFalse(superStructure.holdAlgae());
+                        // joystick.button(3).onTrue(algaeSubsys.intakeReverse()).onFalse(algaeSubsys.intakeStop());
+                        // joystick.button(5).onTrue(algaeSubsys.intakeForward()).onFalse(superStructure.holdAlgae());
 
-                // joystick.povLeft().whileTrue(drivetrainSubsys.alignLeft());
+                        // joystick.povLeft().whileTrue(drivetrainSubsys.alignLeft());
 
-                // operator bindings
-                xboxController2.povUp().onTrue(superStructure.outputTopCoral());
-                xboxController2.povDown().onTrue(superStructure.intakeCoral());// .onFalse(coralSubsys.stop());
-                xboxController2.povLeft().whileTrue(superStructure.outputCoral());
-                xboxController2.povRight().whileTrue(superStructure.outputCoralTrough());
+                        // operator bindings
+                        xboxController2.povUp().onTrue(superStructure.outputTopCoral());
+                        xboxController2.povDown().onTrue(superStructure.intakeCoral());// .onFalse(coralSubsys.stop());
+                        xboxController2.povLeft().whileTrue(superStructure.outputCoral());
+                        xboxController2.povRight().whileTrue(superStructure.outputCoralTrough());
 
-                xboxController2.a().onTrue(elevatorSubsys.setHeight(8.0));
-                xboxController2.b().onTrue(elevatorSubsys.setHeight(23.5));// maybe change?//$$24
-                xboxController2.x().onTrue(elevatorSubsys.setHeight(0.0));
-                xboxController2.y().onTrue(elevatorSubsys.setHeight(48.5));
-                xboxController2.rightBumper().onTrue(superStructure.manualL4Bump());
+                        xboxController2.a().onTrue(elevatorSubsys.setHeight(8.0));
+                        xboxController2.b().onTrue(elevatorSubsys.setHeight(23.5));// maybe change?//$$24
+                        xboxController2.x().onTrue(elevatorSubsys.setHeight(0.0));
+                        xboxController2.y().onTrue(elevatorSubsys.setHeight(48.5));
+                        xboxController2.rightBumper().onTrue(superStructure.manualL4Bump());
 
-                // nootont
-                xboxController2.rightTrigger().onTrue(superStructure.bombsAway());
-                xboxController2.leftBumper().onTrue(superStructure.detonate());
-                xboxController2.leftTrigger().onTrue(superStructure.takeCover());
+                        // nootont
+                        xboxController2.rightTrigger().onTrue(superStructure.bombsAway());
+                        xboxController2.leftBumper().onTrue(superStructure.detonate());
+                        xboxController2.leftTrigger().onTrue(superStructure.takeCover());
 
-                // automoatically added from the CTRE generated swerve drive
-                // probably is important?
-                drivetrainSubsys.registerTelemetry(logger::telemeterize);
+                        // automoatically added from the CTRE generated swerve drive
+                        // probably is important?
+                        drivetrainSubsys.registerTelemetry(logger::telemeterize);
                 }
         }
 
@@ -402,11 +396,9 @@ else {
 
         private VisionSystemSim vizSim = new VisionSystemSim("Reefscape Sim");
 
-        public void vizSimInit(){
+        public void vizSimInit() {
                 vizSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded));
         }
-
-
 
         public void updateVizSim() {
                 vizSim.update(drivetrainSubsys.getState().Pose);

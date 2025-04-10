@@ -140,6 +140,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
             startSimThread();
         }
     }
+
     public DrivetrainSubsystem(
             SwerveDrivetrainConstants drivetrainConstants,
             double odometryUpdateFrequency,
@@ -164,41 +165,42 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
     }
 
     public DrivetrainSubsystem(
-        CommandJoystick joystick,
-        SwerveDrivetrainConstants drivetrainConstants,
-        SwerveModuleConstants<?, ?, ?>... modules) {
-    super(drivetrainConstants, modules);
-    if (Utils.isSimulation()) {
-        this.joystick = joystick;
-        startSimThread();
+            CommandJoystick joystick,
+            SwerveDrivetrainConstants drivetrainConstants,
+            SwerveModuleConstants<?, ?, ?>... modules) {
+        super(drivetrainConstants, modules);
+        if (Utils.isSimulation()) {
+            this.joystick = joystick;
+            startSimThread();
+        }
     }
-}
-public DrivetrainSubsystem(
-    CommandJoystick joystick,
-        SwerveDrivetrainConstants drivetrainConstants,
-        double odometryUpdateFrequency,
-        SwerveModuleConstants<?, ?, ?>... modules) {
-    super(drivetrainConstants, odometryUpdateFrequency, modules);
-    if (Utils.isSimulation()) {
-        this.joystick = joystick;
-        startSimThread();
-    }
-}
 
-public DrivetrainSubsystem(
-    CommandJoystick joystick,
-        SwerveDrivetrainConstants drivetrainConstants,
-        double odometryUpdateFrequency,
-        Matrix<N3, N1> odometryStandardDeviation,
-        Matrix<N3, N1> visionStandardDeviation,
-        SwerveModuleConstants<?, ?, ?>... modules) {
-    super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation,
-            modules);
-    if (Utils.isSimulation()) {
-        this.joystick = joystick;
-        startSimThread();
+    public DrivetrainSubsystem(
+            CommandJoystick joystick,
+            SwerveDrivetrainConstants drivetrainConstants,
+            double odometryUpdateFrequency,
+            SwerveModuleConstants<?, ?, ?>... modules) {
+        super(drivetrainConstants, odometryUpdateFrequency, modules);
+        if (Utils.isSimulation()) {
+            this.joystick = joystick;
+            startSimThread();
+        }
     }
-}
+
+    public DrivetrainSubsystem(
+            CommandJoystick joystick,
+            SwerveDrivetrainConstants drivetrainConstants,
+            double odometryUpdateFrequency,
+            Matrix<N3, N1> odometryStandardDeviation,
+            Matrix<N3, N1> visionStandardDeviation,
+            SwerveModuleConstants<?, ?, ?>... modules) {
+        super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation,
+                modules);
+        if (Utils.isSimulation()) {
+            this.joystick = joystick;
+            startSimThread();
+        }
+    }
 
     /**
      * Returns a command that applies the specified control request to this swerve
@@ -212,7 +214,6 @@ public DrivetrainSubsystem(
         return run(() -> this.setControl(requestSupplier.get()));
     }
 
-    
     public Command stop() {
         return runOnce(() -> this.setControl(robotDrive.withSpeeds(new ChassisSpeeds(0.0, 0.0, 0.0))));
     }
@@ -248,32 +249,33 @@ public DrivetrainSubsystem(
             return joystick.button(3).getAsBoolean();
 
         } else {
-        try {
-            LaserCan.Measurement leftMeas = leftLaser.getMeasurement();
-            return (leftMeas.distance_mm < leftDriveLaserDistance
-                    && leftMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
-        } catch (NullPointerException l) {
-         //   DriverStation.reportError("left sensor is null", l.getStackTrace());
-            return false;
+            try {
+                LaserCan.Measurement leftMeas = leftLaser.getMeasurement();
+                return (leftMeas.distance_mm < leftDriveLaserDistance
+                        && leftMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
+            } catch (NullPointerException l) {
+                // DriverStation.reportError("left sensor is null", l.getStackTrace());
+                return false;
+            }
         }
-    }
 
     }
 
-    public boolean seesRightSensor(){
+    public boolean seesRightSensor() {
         if (Utils.isSimulation()) {
             return joystick.button(4).getAsBoolean();
 
         } else {
-    try{
-    LaserCan.Measurement RightMeas = rightLaser.getMeasurement();
-    return (RightMeas.distance_mm < rightDriveLaserDistance); //&& RightMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
+            try {
+                LaserCan.Measurement RightMeas = rightLaser.getMeasurement();
+                return (RightMeas.distance_mm < rightDriveLaserDistance); // && RightMeas.status ==
+                                                                          // LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
 
-    } catch(NullPointerException r){
-    //DriverStation.reportError("right sensor is null", r.getStackTrace());
-    return false;
-    }
-}
+            } catch (NullPointerException r) {
+                // DriverStation.reportError("right sensor is null", r.getStackTrace());
+                return false;
+            }
+        }
     }
 
     public boolean autonSeesLeftSensor() {
@@ -281,32 +283,33 @@ public DrivetrainSubsystem(
             return joystick.button(3).getAsBoolean();
 
         } else {
-        try {
-            LaserCan.Measurement leftMeas = leftLaser.getMeasurement();
-            return (leftMeas.distance_mm < autonLeftDriveLaserDistance
-                                && leftMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
-        } catch (NullPointerException l) {
-          //  DriverStation.reportError("left sensor is null", l.getStackTrace());
-            return false;
+            try {
+                LaserCan.Measurement leftMeas = leftLaser.getMeasurement();
+                return (leftMeas.distance_mm < autonLeftDriveLaserDistance
+                        && leftMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
+            } catch (NullPointerException l) {
+                // DriverStation.reportError("left sensor is null", l.getStackTrace());
+                return false;
+            }
         }
-    }
 
     }
 
-    public boolean autonSeesRightSensor(){
+    public boolean autonSeesRightSensor() {
         if (Utils.isSimulation()) {
             return joystick.button(4).getAsBoolean();
 
         } else {
-    try{
-    LaserCan.Measurement RightMeas = rightLaser.getMeasurement();
-    return (RightMeas.distance_mm < autonRightDriveLaserDistance); //&& RightMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
+            try {
+                LaserCan.Measurement RightMeas = rightLaser.getMeasurement();
+                return (RightMeas.distance_mm < autonRightDriveLaserDistance); // && RightMeas.status ==
+                                                                               // LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
 
-    } catch(NullPointerException r){
-   // DriverStation.reportError("right sensor is null", r.getStackTrace());
-    return false;
-    }
-}
+            } catch (NullPointerException r) {
+                // DriverStation.reportError("right sensor is null", r.getStackTrace());
+                return false;
+            }
+        }
     }
 
     public boolean seesLeftSensorClose() {
@@ -314,32 +317,33 @@ public DrivetrainSubsystem(
             return joystick.button(3).getAsBoolean();
 
         } else {
-        try {
-            LaserCan.Measurement leftMeas = leftLaser.getMeasurement();
-            return (leftMeas.distance_mm < closeLeftDriveLaserDistance
-                    && leftMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
-        } catch (NullPointerException l) {
-          //  DriverStation.reportError("left sensor is null", l.getStackTrace());
-            return false;
+            try {
+                LaserCan.Measurement leftMeas = leftLaser.getMeasurement();
+                return (leftMeas.distance_mm < closeLeftDriveLaserDistance
+                        && leftMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
+            } catch (NullPointerException l) {
+                // DriverStation.reportError("left sensor is null", l.getStackTrace());
+                return false;
+            }
         }
-    }
 
     }
 
-    public boolean seesRightSensorClose(){
+    public boolean seesRightSensorClose() {
         if (Utils.isSimulation()) {
             return joystick.button(4).getAsBoolean();
 
         } else {
-    try{
-    LaserCan.Measurement RightMeas = rightLaser.getMeasurement();
-    return (RightMeas.distance_mm < closeRightDriveLaserDistance); //&& RightMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
+            try {
+                LaserCan.Measurement RightMeas = rightLaser.getMeasurement();
+                return (RightMeas.distance_mm < closeRightDriveLaserDistance); // && RightMeas.status ==
+                                                                               // LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
 
-    } catch(NullPointerException r){
-   // DriverStation.reportError("right sensor is null", r.getStackTrace());
-    return false;
-    }
-}
+            } catch (NullPointerException r) {
+                // DriverStation.reportError("right sensor is null", r.getStackTrace());
+                return false;
+            }
+        }
     }
 
     @Override
@@ -367,29 +371,26 @@ public DrivetrainSubsystem(
         }
 
         // if (seesLeftSensorClose() && seesRightSensorClose() ) {
-        //     blinkyLight.set(0.35);//flashy color 2(blue)
+        // blinkyLight.set(0.35);//flashy color 2(blue)
         // } else if (seesLeftSensor() && seesRightSensor()) {
-        //     blinkyLight.set(-0.11);//strobe red
+        // blinkyLight.set(-0.11);//strobe red
         // } else if (!seesLeftSensor() && !seesRightSensor()) {
-        //     blinkyLight.set(0.61);//red
+        // blinkyLight.set(0.61);//red
         // } else if (seesLeftSensor() | seesRightSensor()) {
-        //     blinkyLight.set(0.77);//green
+        // blinkyLight.set(0.77);//green
         // }
 
+        try {
+            SmartDashboard.putNumber("left Laser Distance", leftLaser.getMeasurement().distance_mm);
+        } catch (NullPointerException r) {
+            // DriverStation.reportError("left sensor is null", r.getStackTrace());
+        }
 
-        try{
-        SmartDashboard.putNumber("left Laser Distance", leftLaser.getMeasurement().distance_mm);
-    }
-        catch(NullPointerException r){
-           // DriverStation.reportError("left sensor is null", r.getStackTrace());
-            }
-
-            try{
-                SmartDashboard.putNumber("right Laser Distance", rightLaser.getMeasurement().distance_mm);
-            }
-                catch(NullPointerException r){
-                 //   DriverStation.reportError("right sensor is null", r.getStackTrace());
-                    }
+        try {
+            SmartDashboard.putNumber("right Laser Distance", rightLaser.getMeasurement().distance_mm);
+        } catch (NullPointerException r) {
+            // DriverStation.reportError("right sensor is null", r.getStackTrace());
+        }
     }
 
     private void startSimThread() {
@@ -420,8 +421,8 @@ public DrivetrainSubsystem(
                                     .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                                     .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())),
                     new PPHolonomicDriveController(
-                            new PIDConstants(10, 0, 0),//drive
-                            new PIDConstants(7, 0, 0)),//Rotation
+                            new PIDConstants(10, 0, 0), // drive
+                            new PIDConstants(7, 0, 0)), // Rotation
                     config,
                     () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
                     this);
