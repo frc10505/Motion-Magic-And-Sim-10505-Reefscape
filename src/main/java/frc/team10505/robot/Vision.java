@@ -25,12 +25,16 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import java.util.Optional;
 
 import frc.team10505.robot.subsystems.DrivetrainSubsystem;
 
-public class Vision {
+public class Vision extends SubsystemBase{
 /*Cameras */
 public final PhotonCamera reefCam = new PhotonCamera("reefCam");
 public final PhotonCamera backCam = new PhotonCamera("backCam");
@@ -116,20 +120,20 @@ public Optional<EstimatedRobotPose> getReefCamEstimatedPose(){
         }
 
 
-public double lastBackCamEstimateTimestamp = 0.0;
+// public double lastBackCamEstimateTimestamp = 0.0;
 
-public Optional<EstimatedRobotPose> getBackCamEstimatedPose(){
-        Optional<EstimatedRobotPose> backCamRobotPose = Optional.empty();
+// public Optional<EstimatedRobotPose> getBackCamEstimatedPose(){
+//         Optional<EstimatedRobotPose> backCamRobotPose = Optional.empty();
 
-        for (PhotonPipelineResult change : backCam.getAllUnreadResults() ){
+//         for (PhotonPipelineResult change : backCam.getAllUnreadResults() ){
 
-            backCamRobotPose = backCamEstimator.update(change);
-        }
+//             backCamRobotPose = backCamEstimator.update(change);
+//         }
         
-        lastBackCamEstimateTimestamp = backCam.getLatestResult().getTimestampSeconds();
+//         lastBackCamEstimateTimestamp = backCam.getLatestResult().getTimestampSeconds();
 
-        return backCamRobotPose;
-    }
+//         return backCamRobotPose;
+//     }
 
 
 
@@ -142,6 +146,32 @@ public void updateViz(Pose2d pose){
 public void reset() {
     visionSim.clearAprilTags();
     visionSim.addAprilTags(kFieldLayout);
+}
+
+public Command bruh(){
+    return runOnce(() ->{
+        getReefCamEstimatedPose().ifPresent(est -> {
+            SmartDashboard.putNumber("reef cam pose x", est.estimatedPose.toPose2d().getX());
+            SmartDashboard.putNumber("reef cam pose y", est.estimatedPose.toPose2d().getY());
+            SmartDashboard.putNumber("reef cam pose rot", est.estimatedPose.toPose2d().getRotation().getDegrees());
+        });
+    });
+}
+
+@Override
+public void periodic(){
+   // SmartDashboard.putNumber("Sim cam fps", reefCamSim.getVideoSimRaw().getActualFPS());
+//    Commands.race(
+//    bruh(),
+//     Commands.waitSeconds(0.02));
+
+
+getReefCamEstimatedPose().ifPresent(est -> {
+    SmartDashboard.putNumber("reef cam pose x", est.estimatedPose.toPose2d().getX());
+    SmartDashboard.putNumber("reef cam pose y", est.estimatedPose.toPose2d().getY());
+    SmartDashboard.putNumber("reef cam pose rot", est.estimatedPose.toPose2d().getRotation().getDegrees());
+});
+
 }
 
 }

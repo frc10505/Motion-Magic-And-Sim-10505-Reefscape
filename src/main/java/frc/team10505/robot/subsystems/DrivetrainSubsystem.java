@@ -48,6 +48,8 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
 
     public final Spark blinkyLight = new Spark(0);
 
+    private Pose2d betterPose = new Pose2d();
+
     double turnDistance = 0;
     double strafeDistance = 0;
     double skewDistance = 0;
@@ -371,6 +373,9 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
 
         }
 
+        var updatedPose = new Pose2d(this.getState().Pose.getX(), this.getState().Pose.getY(), new Rotation2d(this.getPigeon2().getYaw().getValueAsDouble()));
+        betterPose = updatedPose;
+
         // if (seesLeftSensorClose() && seesRightSensorClose() ) {
         // blinkyLight.set(0.35);//flashy color 2(blue)
         // } else if (seesLeftSensor() && seesRightSensor()) {
@@ -409,7 +414,31 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
+
     public void configPathplanner() {
+        if(Utils.isSimulation()){
+            try {
+                var config = RobotConfig.fromGUISettings();
+    
+                AutoBuilder.configure(
+                        () -> betterPose,
+                        this::resetPose,
+                        () -> getState().Speeds,
+                        (speeds, feedforwards) -> setControl(
+                                m_pathApplyRobotSpeeds.withSpeeds(speeds)
+                                        .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                                        .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())),
+                        new PPHolonomicDriveController(
+                                new PIDConstants(10, 0, 0), // drive
+                                new PIDConstants(7, 0, 0)), // Rotation
+                        config,
+                        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                        this);
+            } catch (Exception ex) {
+                DriverStation.reportError("something may or may not be broken, idk", ex.getStackTrace());
+            }
+        }
+        else{
         try {
             var config = RobotConfig.fromGUISettings();
 
@@ -430,6 +459,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
         } catch (Exception ex) {
             DriverStation.reportError("something may or may not be broken, idk", ex.getStackTrace());
         }
+    }
     }
 
       @Override

@@ -150,6 +150,8 @@ public class RobotContainer {
                 configDefaultCommands();
                 configButtonBindings();
                 configAutonomous();
+
+                vision.reset();
         }
 
         /**
@@ -395,62 +397,26 @@ public class RobotContainer {
 
         }
 
-        private VisionSystemSim vizSim = new VisionSystemSim("Reefscape Sim");
+        // private VisionSystemSim vizSim = new VisionSystemSim("Reefscape Sim");
 
-        public void vizSimInit() {
-                vizSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded));
-        }
+        // public void vizSimInit() {
+        //         vizSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded));
+        // }
 
-        public void updateVizSim() {
-                vizSim.update(drivetrainSubsys.getState().Pose);
-                vizSim.getDebugField();
-        }
+        // public void updateVizSim() {
+        //         vizSim.update(drivetrainSubsys.getState().Pose);
+        //         vizSim.getDebugField();
+        // }
 
-        public void cameraFeedInit() {
-                var m_visionThread = new Thread(
-                                () -> {
-                                        // Get the UsbCamera from CameraServer
-                                        UsbCamera camera = CameraServer.startAutomaticCapture();
-                                        // Set the resolution
-                                        camera.setResolution(280, 480);// 680
-
-                                        camera.setFPS(20);
-                                        // Get a CvSink. This will capture Mats from the camera
-                                        CvSink cvSink = CameraServer.getVideo();
-                                        // Setup a CvSource. This will send images back to the Dashboard
-                                        CvSource outputStream = CameraServer.putVideo("Rectangle", 640, 480);
-
-                                        // Mats are very memory expensive. Lets reuse this Mat.
-                                        Mat mat = new Mat();
-
-                                        // This cannot be 'true'. The program will never exit if it is. This
-                                        // lets the robot stop this thread when restarting robot code or
-                                        // deploying.
-                                        while (!Thread.interrupted()) {
-                                                // Tell the CvSink to grab a frame from the camera and put it
-                                                // in the source mat. If there is an error notify the output.
-                                                if (cvSink.grabFrame(mat) == 0) {
-                                                        // Send the output the error.
-                                                        outputStream.notifyError(cvSink.getError());
-                                                        // skip the rest of the current iteration
-                                                        continue;
-                                                }
-                                                // Put a rectangle on the image
-                                                Imgproc.rectangle(
-                                                                mat, new Point(100, 100), new Point(400, 400),
-                                                                new Scalar(255, 255, 255), 5);
-                                                // Give the output stream a new image to display
-                                                outputStream.putFrame(mat);
-                                        }
-                                });
-                m_visionThread.setDaemon(true);
-                m_visionThread.start();
-        }
-
+       
         
         public void updateVisionPose(){
 
+
+                vision.updateViz(drivetrainSubsys.getState().Pose);
         var mostRecentReefCamPose = new Pose2d();
+
+        
 
         // if the camera has a tag in sight, it will calculate a pose and add to the
         // drivetrain
@@ -461,9 +427,9 @@ public class RobotContainer {
             var visionEst = vision.simGetReefCamEstimatedPose();
             visionEst.ifPresent(est -> {
                 drivetrainSubsys.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds);
-                SmartDashboard.putNumber("reef cam pose x", est.estimatedPose.toPose2d().getX());
-                SmartDashboard.putNumber("reef cam pose y", est.estimatedPose.toPose2d().getY());
-                SmartDashboard.putNumber("reef cam pose rot", est.estimatedPose.toPose2d().getRotation().getDegrees());
+                SmartDashboard.putNumber("sim reef cam pose x", est.estimatedPose.toPose2d().getX());
+                SmartDashboard.putNumber("sim reef cam pose y", est.estimatedPose.toPose2d().getY());
+                SmartDashboard.putNumber("sim reef cam pose rot", est.estimatedPose.toPose2d().getRotation().getDegrees());
             });
 
            

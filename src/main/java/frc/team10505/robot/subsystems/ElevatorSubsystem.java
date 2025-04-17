@@ -17,6 +17,8 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.sim.TalonFXSimState;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
@@ -45,6 +47,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     //public final TalonFX elevatorFollowerMotor = new TalonFX(kElevatorFollowerMotorId, "kingKan");
     public final TalonFX elevatorFollowerMotor;// = new TalonFX(kElevatorFollowerMotorId);//, "kingKan");
+    private final TalonFXSimState simElevatorMotor;
 
     // Encoders, Real and Simulated
     private double elevatorEncoderValue = 0.0;
@@ -74,9 +77,12 @@ public class ElevatorSubsystem extends SubsystemBase {
         if(Utils.isSimulation()){
             elevatorMotor = new TalonFX(kElevatorMotorId);
             elevatorFollowerMotor = new TalonFX(kElevatorFollowerMotorId);
+             simElevatorMotor = new TalonFXSimState(elevatorMotor);
         }else{
             elevatorMotor = new TalonFX(kElevatorMotorId, "kingKan");
             elevatorFollowerMotor = new TalonFX(kElevatorFollowerMotorId, "kingKan");
+            simElevatorMotor = new TalonFXSimState(elevatorMotor);
+
         }
 
 
@@ -198,29 +204,29 @@ public class ElevatorSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         if (Utils.isSimulation()) {
-            simEncoder = elevatorViz.getLength();
+            // simEncoder = elevatorViz.getLength();
 
-            // motor stuff
+            // // motor stuff
 
-            //height log - me=/6 // *2  //$$/3
-            //simencoder log - me *1 // *12 //$$*2
-            var change = (height/2) - (simEncoder*3);
-            //elevatorMotor.setPosition(simEncoder*12, 0.005); //my last simencoder*1
-            elevatorMotor.setControl(motionMagicVoltage.withPosition(change).withSlot(0));//my last pos height/6
+            // //height log - me=/6 // *2  //$$/3
+            // //simencoder log - me *1 // *12 //$$*2
+            // var change = (height/2) - (simEncoder*3);
+            // //elevatorMotor.setPosition(simEncoder*12, 0.005); //my last simencoder*1
+            // elevatorMotor.setControl(motionMagicVoltage.withPosition(change).withSlot(0));//my last pos height/6
 
-            // simulation & visualization stuff
-            elevatorSim.setInputVoltage(elevatorMotor.getMotorVoltage().getValueAsDouble());
-            elevatorSim.update(0.01);
-            elevatorViz.setLength(elevatorSim.getPositionMeters());
+            // // simulation & visualization stuff
+            // elevatorSim.setInputVoltage(elevatorMotor.getMotorVoltage().getValueAsDouble());
+            // elevatorSim.update(0.01);
+            // elevatorViz.setLength(elevatorSim.getPositionMeters());
 
-            // dashboard stuff
-            SmartDashboard.putNumber("Elevator Encoder", simEncoder);
-            SmartDashboard.putNumber("Elevator set voltage", elevatorMotor.getMotorVoltage().getValueAsDouble());
-            SmartDashboard.putNumber("Elevator follower set voltage",
-                    elevatorFollowerMotor.getMotorVoltage().getValueAsDouble());
-            SmartDashboard.putNumber("Elevator Height", height / 6);
-            SmartDashboard.putNumber("sim elev position", elevatorSim.getPositionMeters());
-            SmartDashboard.putNumber("sim elev motor position", elevatorMotor.getPosition().getValueAsDouble());
+            // // dashboard stuff
+            // SmartDashboard.putNumber("Elevator Encoder", simEncoder);
+            // SmartDashboard.putNumber("Elevator set voltage", elevatorMotor.getMotorVoltage().getValueAsDouble());
+            // SmartDashboard.putNumber("Elevator follower set voltage",
+            //         elevatorFollowerMotor.getMotorVoltage().getValueAsDouble());
+            // SmartDashboard.putNumber("Elevator Height", height / 6);
+            // SmartDashboard.putNumber("sim elev position", elevatorSim.getPositionMeters());
+            // SmartDashboard.putNumber("sim elev motor position", elevatorMotor.getPosition().getValueAsDouble());
 
         } else {
             // motor stuff
