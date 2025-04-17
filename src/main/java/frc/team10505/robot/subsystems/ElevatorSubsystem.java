@@ -38,10 +38,13 @@ import static frc.team10505.robot.Constants.ElevatorConstants.*;
 
 public class ElevatorSubsystem extends SubsystemBase {
     // Motors
-    public final TalonFX elevatorMotor = new TalonFX(kElevatorMotorId, "kingKan");
+    // public final TalonFX elevatorMotor = new TalonFX(kElevatorMotorId, "kingKan");
+    public final TalonFX elevatorMotor;// = new TalonFX(kElevatorMotorId);//, "kingKan");
+
     private final MotionMagicVoltage motionMagicVoltage = new MotionMagicVoltage(0);
 
-    public final TalonFX elevatorFollowerMotor = new TalonFX(kElevatorFollowerMotorId, "kingKan");
+    //public final TalonFX elevatorFollowerMotor = new TalonFX(kElevatorFollowerMotorId, "kingKan");
+    public final TalonFX elevatorFollowerMotor;// = new TalonFX(kElevatorFollowerMotorId);//, "kingKan");
 
     // Encoders, Real and Simulated
     private double elevatorEncoderValue = 0.0;
@@ -60,7 +63,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public boolean usePID = true;
 
-    private final ElevatorSim elevatorSim = new ElevatorSim(DCMotor.getFalcon500(2), 12, 10, 0.05, 0.0, 3.0, true, 2);
+    private final ElevatorSim elevatorSim = new ElevatorSim(DCMotor.getFalcon500(2), 12, 10, 0.05, 0.0, 3.0, true, 0.6);
     public final Mechanism2d elevSimMech = new Mechanism2d(1.5, 1.5);
     private final MechanismRoot2d elevRoot = elevSimMech.getRoot("elevRoot", 0.75, 0.1);
     public final MechanismLigament2d elevatorViz = elevRoot
@@ -68,24 +71,33 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     /* Constructor, runs everything inside during initialization */
     public ElevatorSubsystem() {
+        if(Utils.isSimulation()){
+            elevatorMotor = new TalonFX(kElevatorMotorId);
+            elevatorFollowerMotor = new TalonFX(kElevatorFollowerMotorId);
+        }else{
+            elevatorMotor = new TalonFX(kElevatorMotorId, "kingKan");
+            elevatorFollowerMotor = new TalonFX(kElevatorFollowerMotorId, "kingKan");
+        }
+
+
         TalonFXConfiguration cfg = new TalonFXConfiguration();
 
         FeedbackConfigs fdb = cfg.Feedback;
         fdb.SensorToMechanismRatio = 12;// TODO check gearstack irl
 
         MotionMagicConfigs motionMagic = cfg.MotionMagic;
-        motionMagic.withMotionMagicCruiseVelocity(RotationsPerSecond.of(24))// 5//10
-                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(48))// 10//20
-                .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100));// 100
+        motionMagic.withMotionMagicCruiseVelocity(RotationsPerSecond.of(10))//1000
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(20))//2400
+                .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(1000));//500000
 
         Slot0Configs slot0 = cfg.Slot0;
         slot0.kS = 0.0; // Add 0.25 V output to overcome static friction
         slot0.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
         slot0.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
         slot0.kG = 0.5297854;// .528
-        slot0.kP = 240;// 60; // A position error of 0.2 rotations results in 12 V output
+        slot0.kP = 30;//15// A position error of 0.2 rotations results in 12 V output
         slot0.kI = 0; // No output for integrated error
-        slot0.kD = 0;// 0.5; // A velocity error of 1 rps results in 0.5 V output
+        slot0.kD = 1;//1.9// A velocity error of 1 rps results in 0.5 V output
 
         StatusCode status = StatusCode.StatusCodeNotInitialized;
         for (int i = 0; i < 5; ++i) {
@@ -100,21 +112,23 @@ public class ElevatorSubsystem extends SubsystemBase {
         SmartDashboard.putData("elevatorViz", elevSimMech);
         // elevatorMotor.setPosition(0.0);
 
-        var motorConfig = new MotorOutputConfigs();
+        // var motorConfig = new MotorOutputConfigs();
 
-        // // // set current limits
-        // var limitConfigs = new CurrentLimitsConfigs();
-        // limitConfigs.StatorCurrentLimit = kElevatorMotorCurrentLimit;
-        // limitConfigs.StatorCurrentLimitEnable = true;
+        // // // // set current limits
+        // // var limitConfigs = new CurrentLimitsConfigs();
+        // // limitConfigs.StatorCurrentLimit = kElevatorMotorCurrentLimit;
+        // // limitConfigs.StatorCurrentLimitEnable = true;
 
-        motorConfig.NeutralMode = NeutralModeValue.Brake;
-        elevatorMotor.getConfigurator().apply(motorConfig);
-        // // elevatorMotor.getConfigurator().apply(limitConfigs);
+        // motorConfig.NeutralMode = NeutralModeValue.Brake;
+        // elevatorMotor.getConfigurator().apply(motorConfig);
+        // // // elevatorMotor.getConfigurator().apply(limitConfigs);
 
-        motorConfig.NeutralMode = NeutralModeValue.Brake;
-        elevatorFollowerMotor.getConfigurator().apply(motorConfig);
-        // elevatorFollowerMotor.getConfigurator().apply(limitConfigs);
-        elevatorFollowerMotor.setControl(new Follower(elevatorMotor.getDeviceID(), false));
+        // motorConfig.NeutralMode = NeutralModeValue.Brake;
+        // elevatorFollowerMotor.getConfigurator().apply(motorConfig);
+        // // elevatorFollowerMotor.getConfigurator().apply(limitConfigs);
+        // elevatorFollowerMotor.setControl(new Follower(elevatorMotor.getDeviceID(), false));
+
+
     }
 
     /* commands to referense */
@@ -187,8 +201,12 @@ public class ElevatorSubsystem extends SubsystemBase {
             simEncoder = elevatorViz.getLength();
 
             // motor stuff
-            elevatorMotor.setPosition(simEncoder, 0.015);
-            elevatorMotor.setControl(motionMagicVoltage.withPosition(height / 6).withSlot(0));
+
+            //height log - me=/6 // *2  //$$/3
+            //simencoder log - me *1 // *12 //$$*2
+            var change = (height/2) - (simEncoder*3);
+            //elevatorMotor.setPosition(simEncoder*12, 0.005); //my last simencoder*1
+            elevatorMotor.setControl(motionMagicVoltage.withPosition(change).withSlot(0));//my last pos height/6
 
             // simulation & visualization stuff
             elevatorSim.setInputVoltage(elevatorMotor.getMotorVoltage().getValueAsDouble());

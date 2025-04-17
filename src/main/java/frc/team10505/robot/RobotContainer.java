@@ -73,6 +73,7 @@ public class RobotContainer {
         private final AlgaeSubsystem algaeSubsys = new AlgaeSubsystem();
         private final CoralSubsystem coralSubsys;
         private final ElevatorSubsystem elevatorSubsys = new ElevatorSubsystem();
+        private final Vision vision = new Vision();
 
         /* Superstructure */
         private final Superstructure superStructure;
@@ -444,6 +445,32 @@ public class RobotContainer {
                                 });
                 m_visionThread.setDaemon(true);
                 m_visionThread.start();
+        }
+
+        
+        public void updateVisionPose(){
+
+        var mostRecentReefCamPose = new Pose2d();
+
+        // if the camera has a tag in sight, it will calculate a pose and add to the
+        // drivetrain
+        // if it fails, it will print the message
+
+        try {
+
+            var visionEst = vision.simGetReefCamEstimatedPose();
+            visionEst.ifPresent(est -> {
+                drivetrainSubsys.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds);
+                SmartDashboard.putNumber("reef cam pose x", est.estimatedPose.toPose2d().getX());
+                SmartDashboard.putNumber("reef cam pose y", est.estimatedPose.toPose2d().getY());
+                SmartDashboard.putNumber("reef cam pose rot", est.estimatedPose.toPose2d().getRotation().getDegrees());
+            });
+
+           
+
+        } catch (Exception e) {
+            Commands.print("reef cam pose failed");
+        }
         }
 
 }

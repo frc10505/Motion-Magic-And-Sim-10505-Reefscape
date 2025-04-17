@@ -16,6 +16,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import au.grapplerobotics.LaserCan;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -429,6 +430,26 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
         } catch (Exception ex) {
             DriverStation.reportError("something may or may not be broken, idk", ex.getStackTrace());
         }
+    }
+
+      @Override
+    public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
+
+        Matrix<N3, N1> tagStdDevs = VecBuilder.fill(8.0, 8.0, 8.0);
+       // visionMeasurementStdDevs.set(m_drivetrainId, kNumConfigAttempts, timestampSeconds);
+        super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), tagStdDevs);
+       // super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
+    }
+
+    // same thing as before, but could be used in place of it if we use the standard deviation of vision measurments(I have no idea how to do that!)
+    @Override
+    public void addVisionMeasurement(
+        Pose2d visionRobotPoseMeters,
+        double timestampSeconds,
+        Matrix<N3, N1> visionMeasurementStdDevs
+    ) {
+        visionMeasurementStdDevs.set(m_drivetrainId, kNumConfigAttempts, timestampSeconds);
+        super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds), visionMeasurementStdDevs);
     }
 
 }

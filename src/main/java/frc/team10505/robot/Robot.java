@@ -42,7 +42,9 @@ public class Robot extends TimedRobot {
     robotContainer.updatePose();
     robotContainer.updateDriveSensors();
     if(Utils.isSimulation()){
-    robotContainer.updateVizSim();}
+    robotContainer.updateVizSim();
+    robotContainer.updateVisionPose();
+  }
   }
 
   @Override
