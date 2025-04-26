@@ -9,8 +9,6 @@ import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 
-import com.ctre.phoenix6.swerve.jni.SwerveJNI.DriveState;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
@@ -23,16 +21,10 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.simulation.BatterySim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.Optional;
-
-import frc.team10505.robot.subsystems.DrivetrainSubsystem;
 
 public class Vision extends SubsystemBase{
 /*Cameras */
@@ -40,7 +32,6 @@ public final PhotonCamera reefCam = new PhotonCamera("reefCam");
 public final PhotonCamera backCam = new PhotonCamera("backCam");
 
 /*field layout */
-// private final AprilTagFieldLayout kFieldLayout = AprilTagFields.k2025Reefscape.loadAprilTagLayoutField();
 private final AprilTagFieldLayout kFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
  public static final int kWidthOfCamera = 4656;
@@ -61,7 +52,6 @@ public static final Transform3d kRobotToBackCamTransform = new Transform3d(
 private final PhotonPoseEstimator reefCamEstimator = new PhotonPoseEstimator(kFieldLayout, PoseStrategy.LOWEST_AMBIGUITY, kRobotToReefCamTransform);
 private final PhotonPoseEstimator backCamEstimator = new PhotonPoseEstimator(kFieldLayout, PoseStrategy.LOWEST_AMBIGUITY, kRobotToBackCamTransform);
 
-
 /*Simulation */
 public final VisionSystemSim visionSim = new VisionSystemSim("Vision Sim");
 private final SimCameraProperties cameraProperties = new SimCameraProperties();
@@ -70,20 +60,22 @@ private PhotonCameraSim backCamSim = new PhotonCameraSim(backCam, cameraProperti
 
 
 public Vision() {
+     //cameraProperties.setCalibration(640, 480, Rotation2d.fromDegrees(100));
+     cameraProperties.setCalibError(0.25, 0.08);
+     cameraProperties.setFPS(20);
+     cameraProperties.setAvgLatencyMs(35.0);
+     cameraProperties.setLatencyStdDevMs(5);
+     cameraProperties.setCalibration(kWidthOfCamera, kHeightOfCamera, kCameraFOV);   
+
     reefCamEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
     backCamEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
    
     //sim stuff
     visionSim.addAprilTags(kFieldLayout);
-    visionSim.addCamera(reefCamSim, kRobotToReefCamTransform);
+   visionSim.addCamera(reefCamSim, kRobotToReefCamTransform);
     visionSim.addCamera(backCamSim, kRobotToBackCamTransform);
 
-    cameraProperties.setCalibration(640, 480, Rotation2d.fromDegrees(100));
-    cameraProperties.setCalibError(0.25, 0.08);
-    cameraProperties.setFPS(20);
-    cameraProperties.setAvgLatencyMs(35.0);
-    cameraProperties.setLatencyStdDevMs(5);
-    cameraProperties.setCalibration(kWidthOfCamera, kHeightOfCamera, kCameraFOV);            
+            
 }
 
 
@@ -119,6 +111,22 @@ public Optional<EstimatedRobotPose> getReefCamEstimatedPose(){
             return simReefCamRobotPose;
         }
 
+public double getTargetSkew(PhotonCameraSim camera){
+    return camera.getCamera().getLatestResult().getBestTarget().getSkew();
+}
+
+public double getTargetYaw(PhotonCameraSim camera){
+    return camera.getCamera().getLatestResult().getBestTarget().getYaw();
+}
+
+public double getTargetPitch(PhotonCameraSim camera){
+    return camera.getCamera().getLatestResult().getBestTarget().getPitch();
+}
+
+public Transform3d getTargetTransformation(PhotonCameraSim camera){
+    return camera.getCamera().getLatestResult().getBestTarget().getBestCameraToTarget();
+}
+
 
 // public double lastBackCamEstimateTimestamp = 0.0;
 
@@ -148,15 +156,6 @@ public void reset() {
     visionSim.addAprilTags(kFieldLayout);
 }
 
-public Command bruh(){
-    return runOnce(() ->{
-        getReefCamEstimatedPose().ifPresent(est -> {
-            SmartDashboard.putNumber("reef cam pose x", est.estimatedPose.toPose2d().getX());
-            SmartDashboard.putNumber("reef cam pose y", est.estimatedPose.toPose2d().getY());
-            SmartDashboard.putNumber("reef cam pose rot", est.estimatedPose.toPose2d().getRotation().getDegrees());
-        });
-    });
-}
 
 @Override
 public void periodic(){
@@ -170,8 +169,21 @@ getReefCamEstimatedPose().ifPresent(est -> {
     SmartDashboard.putNumber("reef cam pose x", est.estimatedPose.toPose2d().getX());
     SmartDashboard.putNumber("reef cam pose y", est.estimatedPose.toPose2d().getY());
     SmartDashboard.putNumber("reef cam pose rot", est.estimatedPose.toPose2d().getRotation().getDegrees());
+
+    SmartDashboard.putNumber("reef cam target transform x", getTargetTransformation(reefCamSim).getX());
+    SmartDashboard.putNumber("reef cam target transform y", getTargetTransformation(reefCamSim).getY());
+    SmartDashboard.putNumber("reef cam target transform z", getTargetTransformation(reefCamSim).getZ());
+    SmartDashboard.putNumber("reef cam target rotation x", getTargetTransformation(reefCamSim).getRotation().getX());
+    SmartDashboard.putNumber("reef cam target rotation y", getTargetTransformation(reefCamSim).getRotation().getY());
+    SmartDashboard.putNumber("reef cam target rotation z", getTargetTransformation(reefCamSim).getRotation().getZ());
+    SmartDashboard.putNumber("reef cam target ID", reefCamSim.getCamera().getLatestResult().getBestTarget().fiducialId);
+
+
+
 });
 
+    
 }
+
 
 }

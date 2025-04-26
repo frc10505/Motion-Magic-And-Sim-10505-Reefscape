@@ -6,13 +6,8 @@
 
 package frc.team10505.robot;
 
-import edu.wpi.first.wpilibj2.command.Subsystem;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -20,17 +15,20 @@ import frc.team10505.robot.subsystems.DrivetrainSubsystem;
 import frc.team10505.robot.subsystems.ElevatorSubsystem;
 import frc.team10505.robot.subsystems.AlgaeSubsystem;
 import frc.team10505.robot.subsystems.CoralSubsystem;
+import static frc.team10505.robot.Constants.AlgaeConstants.*;
+import static frc.team10505.robot.Constants.ElevatorConstants.*;
+import static frc.team10505.robot.Constants.CoralConstants.*;
 
 public class Superstructure {
-
+    /*variables */
     private CoralSubsystem coralSubsystem;
     private AlgaeSubsystem algaeSubsystem;
     private ElevatorSubsystem elevatorSubsystem;
     private DrivetrainSubsystem drivetrainSubsystem;
 
-
     private SwerveRequest.ApplyRobotSpeeds autoRobotDrive = new SwerveRequest.ApplyRobotSpeeds();
 
+    /*Constructor */
     public Superstructure(CoralSubsystem coralSubsys, AlgaeSubsystem algaeSubsys, ElevatorSubsystem elevatorSubsys,
             DrivetrainSubsystem drivetrainSubsys) {
         this.coralSubsystem = coralSubsys;
@@ -40,62 +38,34 @@ public class Superstructure {
     }
 
     public Command intakeCoral() {
-        return Commands.sequence(
-                coralSubsystem.runIntake(0.37).until(() -> (coralSubsystem.outSensor() && coralSubsystem.inSensor())),
-                coralSubsystem.runIntake(0.05).until(() -> (coralSubsystem.outSensor() && !coralSubsystem.inSensor())));
+        return coralSubsystem.slowEndIntake(CORAL_INTAKE_SPEED).until(() -> (coralSubsystem.outSensor() && coralSubsystem.inSensor()));
     }
 
     public Command outputCoral() {
         return Commands.sequence(
-                coralSubsystem.runIntake(0.25).until(() -> (!coralSubsystem.outSensor())),
-                elevatorSubsystem.setHeight(0.0)// setHeightRun( 0.0).until(() -> (elevatorSubsystem.isNearGoal()))
-        );
-
+                coralSubsystem.runIntake(CORAL_OUTTAKE_SPEED).until(() -> (!coralSubsystem.outSensor())),
+                elevatorSubsystem.setHeight(0.0));
     }
 
     public Command outputCoralTrough() {
-        return Commands.sequence(
-                coralSubsystem.trough().until(() -> (!coralSubsystem.outSensor())),
-                coralSubsystem.setIntake(0));
+        return coralSubsystem.trough().until(() -> (!coralSubsystem.outSensor()));    
     }
 
     public Command outputTopCoral() {
-        // if (elevatorSubsystem.issGigh()) {
         return Commands.sequence(
-                coralSubsystem.runIntake(0.2), //.until(() -> (!coralSubsystem.outSensor())),
+                coralSubsystem.runIntake(CORAL_OUTTAKE_TOP_SPEED),
                 Commands.waitSeconds(0.5),
-                elevatorSubsystem.setHeight(55.0), // was 53.0
-                Commands.waitUntil(() -> (elevatorSubsystem.isAbove(52.0))), // elevatorSubsystem.isNearGoal())),
+                elevatorSubsystem.setHeight(ELEV_L4_BUMP),
+                Commands.waitUntil(() -> (elevatorSubsystem.isAbove(52.0))), 
                 Commands.waitSeconds(0.2),
                 coralSubsystem.setIntake(0),
-                elevatorSubsystem.setHeight(0.00));
-        // } else{
-        // return Commands.print("Cooper struggles with driving due to a lack of focus,
-        // poor decision-making, and inability to judge distances. His reaction times
-        // are slow, leading to frequent mistakes. He is a very bad BAD BOY. and maybe
-        // slow w \r\n" +
-        // "c( . . )o (\r\n" + //
-        // " ( ( - ) )\r\n" + //
-        // " \\ \\_/`-----' / \r\n" + //
-        // " / / | ( \r\n" + //
-        // " ( ) | ) ( ( \r\n" + //
-        // " `-` `-` `-` ` ");
-        // }
-
+                elevatorSubsystem.setHeight(ELEV_DOWN));
     }
 
     public Command bombsAway() {
         return Commands.sequence(
-
-                elevatorSubsystem.setHeight(55.5),
-                Commands.waitUntil(() -> (elevatorSubsystem.getElevatorEncoder() > 42.5))// ,//42//EDIT VALUE IRL
-        // algaeSubsystem.setVoltage(-1.5).withTimeout(0.05),//-0.5, 0.5, -1.5//-3.5,0.3
-
-        // algaeSubsystem.setVoltage(5.0).until(() -> algaeSubsystem.getPivotEncoder() >
-        // 50),
-        // algaeSubsystem.intakeForwardSlower(),
-        // algaeSubsystem.setAngle(90)
-
+                elevatorSubsystem.setHeight(ELEV_BARGE),
+                Commands.waitUntil(() -> (elevatorSubsystem.getElevatorEncoder() > 42.5))
         );
     }
 
@@ -104,7 +74,7 @@ public class Superstructure {
 
                 algaeSubsystem.setVoltage(-1.5).withTimeout(0.05),
                 algaeSubsystem.setVoltage(5.0).until(() -> algaeSubsystem.getPivotEncoder() > 50),
-                algaeSubsystem.intakeForwardSlower(),
+                algaeSubsystem.setIntake(0.3),
                 algaeSubsystem.setAngle(90)
 
         );
@@ -121,7 +91,7 @@ public class Superstructure {
         return Commands.sequence(
                 elevatorSubsystem.setHeight(0.0),
                 algaeSubsystem.setAngle(-90),
-                algaeSubsystem.intakeStop()
+                algaeSubsystem.stopIntake()
 
         );
 
@@ -135,7 +105,7 @@ public class Superstructure {
 
     public Command holdAlgae() {
         return Commands.sequence(
-                algaeSubsystem.intakeStop(),
+                algaeSubsystem.stopIntake(),
                 algaeSubsystem.setAngle(-13));
     }
 
@@ -151,12 +121,11 @@ public class Superstructure {
 
     // COMMANDS FOR AUTONS
     public Command autoIntakeCoral() {
-        return coralSubsystem.slowEndIntake().until(() -> (coralSubsystem.outSensor() && coralSubsystem.inSensor()));
+        return coralSubsystem.slowEndIntake(CORAL_INTAKE_SPEED).until(() -> (coralSubsystem.outSensor() && coralSubsystem.inSensor()));
     }
 
     public Command autoOutputCoral() {
         return coralSubsystem.runIntake(0.25).until(() -> (!coralSubsystem.outSensor()));
-
     }
 
     public Command autoOutputCoralTrough() {
@@ -167,71 +136,56 @@ public class Superstructure {
         return coralSubsystem.runIntake(0.2).until(() -> (!coralSubsystem.outSensor()));
     }
 
-    // public Command autoGrabAlgae() {
-    // return Commands.sequence(
-    // algaeSubsystem.intakeReverse());
-    // // algaeSubsystem.coastPivot());
-    // }
-
     public Command autoHoldAlgae() {
-        return algaeSubsystem.intakeStop();
+        return algaeSubsystem.stopIntake();
     }
 
     public Command autoScoreCoralL4() {
         return Commands.sequence(
-                elevatorSubsystem.setHeight(48.5), // 49.5 -> shoots over top//48.5
+                elevatorSubsystem.setHeight(ELEV_L4), 
                 Commands.waitUntil(() -> elevatorSubsystem.isNearGoal()),
-                coralSubsystem.setIntake(0.37),
+                coralSubsystem.setIntake(CORAL_INTAKE_SPEED),//What the gaf is this .37? 
+                //other auto scores use .25,  and i think teleop l4 scoring uses 0.05
                 Commands.race(
                         Commands.waitUntil(() -> !coralSubsystem.outSensor()), 
                         Commands.waitSeconds(1.2)));
     }
 
-    public Command autoScoreCoralL3() {
+    public Command autoL4Bump() {
         return Commands.sequence(
-                elevatorSubsystem.setHeight(24.0),
-                Commands.waitUntil(() -> elevatorSubsystem.isNearGoal()),
-                Commands.waitSeconds(0.5),
-                coralSubsystem.runIntake(0.25).until(() -> (!coralSubsystem.outSensor())));
-
+                elevatorSubsystem.setHeight(ELEV_L4_BUMP), 
+                Commands.waitUntil(() -> (elevatorSubsystem.isAbove(52.0))),
+                Commands.waitSeconds(0.2),
+                coralSubsystem.setIntake(0));
     }
 
     public Command autoScoreCoralL2() {
         return Commands.sequence(
-                elevatorSubsystem.setHeight(8.0),
+                elevatorSubsystem.setHeight(ELEV_L2),
                 Commands.waitUntil(() -> elevatorSubsystem.isNearGoal()),
-                // Commands.waitSeconds(0.5),
-                // coralSubsystem.output().until(() -> (!coralSubsystem.outSensor()))//,
-                coralSubsystem.setIntake(0.25),
+                coralSubsystem.setIntake(CORAL_OUTTAKE_SPEED),
                 Commands.race(
                         Commands.waitUntil(() -> (!coralSubsystem.outSensor())),
                         Commands.waitSeconds(2.5)),
                 coralSubsystem.setIntake(0));
     }
 
-    public Command dropCoral() {
-        return coralSubsystem.runIntake(0.25).until(() -> (!coralSubsystem.outSensor()));
-
-    }
-
     public Command autoScoreCoralL1() {
         return Commands.sequence(
-                elevatorSubsystem.setHeight(0.0),
+                elevatorSubsystem.setHeight(ELEV_DOWN),
                 Commands.waitUntil(() -> elevatorSubsystem.isNearGoal()),
-                coralSubsystem.runIntake(0.25).until(() -> (!coralSubsystem.outSensor())));
+                coralSubsystem.trough().until(() -> (!coralSubsystem.outSensor())));
     }
 
-    public Command autoL4Bump() {
-        return Commands.sequence(
-                elevatorSubsystem.setHeight(55.0), // 54.5 //54 BADISH //55 okish
-                // Commands.waitUntil(() -> elevatorSubsystem.isNearGoal()),
-                Commands.waitUntil(() -> (elevatorSubsystem.isAbove(52.0))), // elevatorSubsystem.isNearGoal())),
-                Commands.waitSeconds(0.2),
-                coralSubsystem.setIntake(0));
+    public Command dropCoral() {
+        return coralSubsystem.runIntake(CORAL_OUTTAKE_SPEED).until(() -> (!coralSubsystem.outSensor()));
     }
+
+
+
 
     public Command autoElevDown() {
-        return elevatorSubsystem.setHeight(0.0);
+        return elevatorSubsystem.setHeight(ELEV_DOWN);
     }
 
     public Command autoAlignLeft() {
@@ -239,7 +193,6 @@ public class Superstructure {
                 drivetrainSubsystem.applyRequest(() -> autoRobotDrive.withSpeeds(new ChassisSpeeds(0.0, 0.6, 0.0)))
                         .until(() -> !drivetrainSubsystem.autonSeesLeftSensor()),
                 drivetrainSubsystem.stop()
-        // Commands.none()
         );
     }
 
@@ -248,23 +201,8 @@ public class Superstructure {
                 drivetrainSubsystem.applyRequest(() -> autoRobotDrive.withSpeeds(new ChassisSpeeds(0.0, -0.75, 0.0)))
                         .until(() -> !drivetrainSubsystem.autonSeesRightSensor()), // 0.3
                 drivetrainSubsystem.stop()
-        // drivetrainSubsystem.applyRequest(() -> robotDrive.withSpeeds(new
-        // ChassisSpeeds(0.0, 0.0, 0.0))).until(() ->
-        // !drivetrainSubsystem.seesRightSensor()),
-        // Commands.none()
         );
     }
-
-    // public Command autoDriveForwardBothSensors(){
-    // return Commands.sequence(
-    // drivetrainSubsystem.applyRequest(() -> robotDrive.withSpeeds(new
-    // ChassisSpeeds(0.3, 0.0, 0.0))).until(() ->(
-    // drivetrainSubsystem.seesRightSensor() &&
-    // drivetrainSubsystem.seesLeftSensor())),
-    // drivetrainSubsystem.stop()
-    // // Commands.none()
-    // );
-    // }
 
     public Command autoDriveForward() {
         return Commands.sequence(
@@ -275,27 +213,11 @@ public class Superstructure {
         );
     }
 
-    // public Command autoDriveForwardTillSeesRight(){
-    // return Commands.sequence(
-    // drivetrainSubsystem.applyRequest(() -> robotDrive.withSpeeds(new
-    // ChassisSpeeds(0.3, 0.0, 0.0))).until(() ->(
-    // drivetrainSubsystem.seesRightSensor())),
-    // drivetrainSubsystem.stop()
-    // // Commands.none()
-    // );
-    // }
-
-    // public Command setPose(double x, double y, double rot) {
-    // return Commands.runOnce(() -> {
-    // drivetrainSubsystem.resetPose(new Pose2d(x, y, new Rotation2d(rot)));
-    // });
-    // }
-
     public Command autonBombsAway() {
         return Commands.sequence(
 
-                elevatorSubsystem.setHeight(55.5),
-                Commands.waitUntil(() -> (elevatorSubsystem.getElevatorEncoder() > 42.5))// ,//42//EDIT VALUE IRL
+                elevatorSubsystem.setHeight(ELEV_BARGE),
+                Commands.waitUntil(() -> (elevatorSubsystem.getElevatorEncoder() > 42.5))
 
         );
     }
@@ -319,27 +241,26 @@ public class Superstructure {
     public Command autonDetonateThird() {
         return Commands.sequence(
 
-                algaeSubsystem.intakeForwardSlower(),
-                algaeSubsystem.setAngle(90)
-
+                algaeSubsystem.setIntake(ALGAE_INTAKE_SLOW_SPEED),
+                algaeSubsystem.setAngle(PIVOT_UP)
         );
     }
 
     public Command autonRegurgitateAlgaeFirst() {
         return Commands.sequence(
-                algaeSubsystem.intakeForwardSlower().withTimeout(0.6));
+                algaeSubsystem.setIntake(ALGAE_INTAKE_SLOW_SPEED).withTimeout(0.6));
     }
 
     public Command autonRegurgitateAlgaeSecond() {
         return Commands.sequence(
-                algaeSubsystem.intakeStop());
+                algaeSubsystem.stopIntake());
     }
 
     public Command autonTakeCover() {
         return Commands.sequence(
                 elevatorSubsystem.setHeight(0.0),
                 algaeSubsystem.setAngle(-90),
-                algaeSubsystem.intakeStop()
+                algaeSubsystem.stopIntake()
 
         );
 

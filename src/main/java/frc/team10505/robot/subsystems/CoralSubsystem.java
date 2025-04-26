@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
-import static frc.team10505.robot.Constants.CoralConstants.*;
 import com.ctre.phoenix6.Utils;
 import com.revrobotics.spark.*;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -20,18 +19,19 @@ import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import au.grapplerobotics.LaserCan;
 
-public class CoralSubsystem extends SubsystemBase {
+import static frc.team10505.robot.subsystems.HardwareConstants.*;
+import static frc.team10505.robot.Constants.CoralConstants.*;
 
-    private CommandJoystick monkeyJoystick;// = new CommandJoystick(0);
+public class CoralSubsystem extends SubsystemBase {
     // Motor controllers
-    private final SparkMax intakeLeft = new SparkMax(kLeftMotorId, MotorType.kBrushless);
-    private final SparkMax intakeRight = new SparkMax(kRightMotorID, MotorType.kBrushless);
+    private final SparkMax intakeLeft = new SparkMax(CORAL_LEFT_MOTOR_ID, MotorType.kBrushless);
+    private final SparkMax intakeRight = new SparkMax(CORAL_RIGHT_MOTOR_ID, MotorType.kBrushless);
     private SparkMaxConfig intakeLeftConfig = new SparkMaxConfig();
     private SparkMaxConfig intakeRightConfig = new SparkMaxConfig();
 
     // Laser sensors
-    private final LaserCan inLaser = new LaserCan(60);
-    private final LaserCan outLaser = new LaserCan(61);
+    private final LaserCan inLaser = new LaserCan(CORAL_IN_LASER_ID);
+    private final LaserCan outLaser = new LaserCan(CORAL_OUT_LASER_ID);
 
     // Sim Flying Wheeels
     private final FlywheelSim intakeLeftSim = new FlywheelSim(
@@ -65,34 +65,53 @@ public class CoralSubsystem extends SubsystemBase {
     private double simMotorSpeed = 0;
     private double simSecondaryMotorSpeed = 0;
 
+    private CommandJoystick monkeyJoystick;
+
     /* Constructor */
     public CoralSubsystem() {
         SmartDashboard.putData("coralIntake", coralIntakeMech);
-        configCoralSubsys();
-    }
 
+        // Left intake config
+        intakeLeftConfig.idleMode(IdleMode.kBrake);
+        intakeLeftConfig.smartCurrentLimit(CORAL_MOTOR_CURRENT_LIMIT, CORAL_MOTOR_CURRENT_LIMIT);
+        intakeLeft.configure(intakeLeftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        // Right intake config
+        intakeRightConfig.idleMode(IdleMode.kBrake);
+        intakeRightConfig.smartCurrentLimit(CORAL_MOTOR_CURRENT_LIMIT, CORAL_MOTOR_CURRENT_LIMIT);
+        intakeRightConfig.inverted(true);
+        intakeRight.configure(intakeRightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);    }
+
+    /*Other constructor, intended for use in simulation */
     public CoralSubsystem(CommandJoystick monkeyJoystick) {
         this.monkeyJoystick = monkeyJoystick;
         SmartDashboard.putData("coralIntake", coralIntakeMech);
-        configCoralSubsys();
+
+        // Left intake config
+        intakeLeftConfig.idleMode(IdleMode.kBrake);
+        intakeLeftConfig.smartCurrentLimit(CORAL_MOTOR_CURRENT_LIMIT, CORAL_MOTOR_CURRENT_LIMIT);
+        intakeLeft.configure(intakeLeftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        // Right intake config
+        intakeRightConfig.idleMode(IdleMode.kBrake);
+        intakeRightConfig.smartCurrentLimit(CORAL_MOTOR_CURRENT_LIMIT, CORAL_MOTOR_CURRENT_LIMIT);
+        intakeRightConfig.inverted(true);
+        intakeRight.configure(intakeRightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);  
     }
 
     /* Calculations */
     public boolean inSensor() {
         if (Utils.isSimulation()) {
             return monkeyJoystick.button(1).getAsBoolean();
-
         } else {
             LaserCan.Measurement inMeas = inLaser.getMeasurement();
             return (inMeas.distance_mm < 50.0 && inMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
-
         }
     }
 
     public boolean outSensor() {
         if (Utils.isSimulation()) {
             return monkeyJoystick.button(2).getAsBoolean();
-
         } else {
             LaserCan.Measurement outMeas = outLaser.getMeasurement();
             return (outMeas.distance_mm < 100.0 && outMeas.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT);
@@ -105,11 +124,8 @@ public class CoralSubsystem extends SubsystemBase {
         if (Utils.isSimulation()) {
             return runEnd(() -> {
                 simMotorSpeed = speed;
-
             }, () -> {
-
                 simMotorSpeed = 0;
-
             });
         } else {
             return runEnd(() -> {
@@ -139,8 +155,8 @@ public class CoralSubsystem extends SubsystemBase {
         if (Utils.isSimulation()) {
 
             return runEnd(() -> {
-                simMotorSpeed = kLeftL1Speed;
-                simSecondaryMotorSpeed = kRightL1Speed * kTroughRightMotorPercentage;
+                simMotorSpeed = CORAL_TROUGH_LEFT_SPEED;
+                simSecondaryMotorSpeed = CORAL_TROUGH_RIGHT_SPEED;
 
             },
                     () -> {
@@ -149,8 +165,8 @@ public class CoralSubsystem extends SubsystemBase {
                     });
         } else {
             return runEnd(() -> {
-                intakeLeft.set(kLeftL1Speed);
-                intakeRight.set(kRightL1Speed * kTroughRightMotorPercentage);
+                intakeLeft.set(CORAL_TROUGH_LEFT_SPEED);
+                intakeRight.set(CORAL_TROUGH_RIGHT_SPEED);
             },
                     () -> {
                         intakeLeft.set(0);
@@ -159,23 +175,23 @@ public class CoralSubsystem extends SubsystemBase {
         }
     }
 
-    public Command slowEndIntake() {
+    public Command slowEndIntake(double firstSpeed) {
         if (Utils.isSimulation()) {
             return runEnd(() -> {
-                simMotorSpeed = kIntakeSpeed;
+                simMotorSpeed = firstSpeed;
 
             },
                     () -> {
-                        runIntake(0.05).until(() -> (outSensor() && !inSensor()));
+                        runIntake(CORAL_SLOW_SPEED).until(() -> (outSensor() && !inSensor()));
                     });
         } else {
 
             return runEnd(() -> {
-                intakeLeft.set(kIntakeSpeed);
-                intakeRight.set(kIntakeSpeed);
+                intakeLeft.set(firstSpeed);
+                intakeRight.set(firstSpeed);
             },
                     () -> {
-                        runIntake(0.05).until(() -> (outSensor() && !inSensor()));
+                        runIntake(CORAL_SLOW_SPEED).until(() -> (outSensor() && !inSensor()));
                     });
         }
     }
@@ -218,6 +234,11 @@ public class CoralSubsystem extends SubsystemBase {
             intakeLeftSim.setInput(simMotorSpeed);
             intakeLeftSim.update(0.001);
 
+            if(simSecondaryMotorSpeed == 0){
+                intakeRightSim.setInput(simSecondaryMotorSpeed);
+            } else {
+                intakeRightSim.setInput(simMotorSpeed);
+            }
             intakeRightSim.setInput(simMotorSpeed);
             intakeRightSim.update(0.001);
 
@@ -232,23 +253,4 @@ public class CoralSubsystem extends SubsystemBase {
 
         }
     }
-
-    /*
-     * configurations to be called in the constructor,
-     * runs once during init,
-     * here it is used to configure motor settings
-     */
-    private void configCoralSubsys() {
-        // Left intake config
-        intakeLeftConfig.idleMode(IdleMode.kBrake);
-        intakeLeftConfig.smartCurrentLimit(kLeftMotorCurrentLimit, kLeftMotorCurrentLimit);
-        intakeLeft.configure(intakeLeftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-        // Right intake config
-        intakeRightConfig.idleMode(IdleMode.kBrake);
-        intakeRightConfig.smartCurrentLimit(kRightMotorCurrentLimit, kRightMotorCurrentLimit);
-        intakeRightConfig.inverted(true);
-        intakeRight.configure(intakeRightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-    }
-
 }

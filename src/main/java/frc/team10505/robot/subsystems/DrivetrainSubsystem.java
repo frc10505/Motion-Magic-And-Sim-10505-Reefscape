@@ -17,7 +17,6 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import au.grapplerobotics.LaserCan;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -34,25 +33,21 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.team10505.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+
+import static frc.team10505.robot.subsystems.HardwareConstants.*;
 import static frc.team10505.robot.Constants.DrivetrainConstants.*;
 
 public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsystem {
     private SwerveRequest.ApplyRobotSpeeds robotDrive = new SwerveRequest.ApplyRobotSpeeds();
 
-    private CommandJoystick joystick = new CommandJoystick(0);
+    private CommandJoystick joystick;
 
-    // SwerveRequest.ApplyChassisSpeeds();
+    private final LaserCan rightLaser = new LaserCan(DRIVETRAIN_RIGHT_LASER_ID);
+    private final LaserCan leftLaser = new LaserCan(DRIVETRAIN_LEFT_LASER_ID);
 
-    private final LaserCan leftLaser = new LaserCan(53);
-    private final LaserCan rightLaser = new LaserCan(52);
-
-    public final Spark blinkyLight = new Spark(0);
+    public final Spark blinkyLight = new Spark(DRIVETRAIN_BLINKY_LIGHT_CHANNEL);
 
     private Pose2d betterPose = new Pose2d();
-
-    double turnDistance = 0;
-    double strafeDistance = 0;
-    double skewDistance = 0;
 
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
@@ -421,7 +416,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
                 var config = RobotConfig.fromGUISettings();
     
                 AutoBuilder.configure(
-                        () -> betterPose,
+                        () -> getState().Pose, //betterPose,
                         this::resetPose,
                         () -> getState().Speeds,
                         (speeds, feedforwards) -> setControl(
