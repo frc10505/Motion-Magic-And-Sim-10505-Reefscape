@@ -5,8 +5,11 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
@@ -34,6 +37,9 @@ public class CoralSubsystem extends SubsystemBase {
     private final LaserCan outLaser = new LaserCan(CORAL_OUT_LASER_ID);
 
     // Sim Flying Wheeels
+    private final Color8Bit red = new Color8Bit(Color.kFirstRed);
+    private final Color8Bit green = new Color8Bit(Color.kGreen);
+
     private final FlywheelSim intakeLeftSim = new FlywheelSim(
             LinearSystemId.createFlywheelSystem(DCMotor.getNEO(1), 0.005, 5), DCMotor.getNEO(1));
 
@@ -44,6 +50,11 @@ public class CoralSubsystem extends SubsystemBase {
 
     private final MechanismRoot2d leftSimRoot = coralIntakeMech.getRoot("leftRoot", .6, 0.6);
     private final MechanismRoot2d rightSimRoot = coralIntakeMech.getRoot("rightRoot", 2.4, 0.6);
+
+    private final MechanismRoot2d inSensorRoot = coralIntakeMech.getRoot("inSensorRoot", 1.5, 1);
+    private final MechanismRoot2d outSensorRoot = coralIntakeMech.getRoot("outSensorRoot", 1.5, 0.2);
+
+
     private final MechanismRoot2d sigmaSimRoot = coralIntakeMech.getRoot("sigmaRoot", .6, 0.6);
     private final MechanismRoot2d skibidiSimRoot = coralIntakeMech.getRoot("skbidiRoot", 2.4, 0.6);
     private final MechanismRoot2d donnysFreakySimRoot = coralIntakeMech.getRoot("donnysRoot", 0.8, 0.6);
@@ -53,6 +64,12 @@ public class CoralSubsystem extends SubsystemBase {
             .append(new MechanismLigament2d("leftIntakeLigament", 0.4, 000));
     private final MechanismLigament2d rightIntakeViz = rightSimRoot
             .append(new MechanismLigament2d("rightIntakeLigament", 0.4, 180));
+
+    private final MechanismLigament2d inSensor = inSensorRoot
+            .append(new MechanismLigament2d("inSensorLigament", 0.15, 90, 40, red));
+    private final MechanismLigament2d outSensor = outSensorRoot
+            .append(new MechanismLigament2d("outSensorLigament", 0.15, -90, 40, red));
+
     private final MechanismLigament2d sigmaIntakeViz = sigmaSimRoot
             .append(new MechanismLigament2d("sigmaIntakeLigament", 0.4, 000));
     private final MechanismLigament2d skibidiIntakeViz = skibidiSimRoot
@@ -239,6 +256,19 @@ public class CoralSubsystem extends SubsystemBase {
             } else {
                 intakeRightSim.setInput(simMotorSpeed);
             }
+
+            if(inSensor()){
+                inSensor.setColor(green);
+            } else{
+                inSensor.setColor(red);
+            }
+
+            if(outSensor()){
+                outSensor.setColor(green);
+            } else{
+                outSensor.setColor(red);
+            }
+
             intakeRightSim.setInput(simMotorSpeed);
             intakeRightSim.update(0.001);
 

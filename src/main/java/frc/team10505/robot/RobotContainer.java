@@ -56,10 +56,10 @@ public class RobotContainer {
         private final CommandJoystick joystick2 = new CommandJoystick(1);
 
         /* Subsystems */
+        private final ElevatorSubsystem elevatorSubsys = new ElevatorSubsystem();
         private final AlgaeSubsystem algaeSubsys = new AlgaeSubsystem();
         private final CoralSubsystem coralSubsys;
         private final DrivetrainSubsystem drivetrainSubsys;
-        private final ElevatorSubsystem elevatorSubsys = new ElevatorSubsystem();
         private final Vision vision = new Vision();
 
         /* Superstructure */
