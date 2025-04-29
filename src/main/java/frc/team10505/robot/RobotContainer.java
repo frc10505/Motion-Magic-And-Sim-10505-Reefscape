@@ -173,16 +173,16 @@ public class RobotContainer {
         private void configButtonBindings() {
 
                 if (Utils.isSimulation()) {
-                        // joystick.button(1).onTrue(elevatorSubsys.setHeight(0));// coralSubsys.slowEndIntake());//
-                        // joystick.button(2).onTrue(elevatorSubsys.setHeight(1));// coralSubsys.trough().until (() ->
-                        //                                                        // !coralSubsys.outSensor()));
-                        // joystick.button(3).onTrue(elevatorSubsys.setHeight(2));
-                        // joystick.button(4).onTrue(elevatorSubsys.setHeight(3));
+                        joystick.button(1).onTrue(elevatorSubsys.setHeight(0));// coralSubsys.slowEndIntake());//
+                        joystick.button(2).onTrue(elevatorSubsys.setHeight(0.15));// coralSubsys.trough().until (() ->
+                                                                               // !coralSubsys.outSensor()));
+                        joystick.button(3).onTrue(elevatorSubsys.setHeight(0.3));
+                        joystick.button(4).onTrue(elevatorSubsys.setHeight(0.5));
 
-                        joystick.button(1).onTrue(algaeSubsys.setAngle(PIVOT_DOWN));
-                        joystick.button(2).onTrue(algaeSubsys.setAngle(-30));
-                        joystick.button(3).onTrue(algaeSubsys.setAngle(PIVOT_OUT));
-                        joystick.button(4).onTrue(algaeSubsys.setAngle(PIVOT_UP));
+                        // joystick.button(1).onTrue(algaeSubsys.setAngle(PIVOT_DOWN));
+                        // joystick.button(2).onTrue(algaeSubsys.setAngle(-30));
+                        // joystick.button(3).onTrue(algaeSubsys.setAngle(PIVOT_OUT));
+                        // joystick.button(4).onTrue(algaeSubsys.setAngle(PIVOT_UP));
 
                         joystick2.button(2).onTrue(resetPose());
                         joystick2.button(3).whileTrue(coralSubsys.runIntake(-1));

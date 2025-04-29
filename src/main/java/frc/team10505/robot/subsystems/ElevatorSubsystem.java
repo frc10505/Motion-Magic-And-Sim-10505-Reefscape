@@ -40,60 +40,72 @@ public class ElevatorSubsystem extends SubsystemBase {
     public final TalonFX elevatorMotor;
     public final TalonFX elevatorFollowerMotor;
 
-    private final MotionMagicVoltage motionMagicVoltage;
+    private MotionMagicVoltage motionMagicVoltage;
 
     private double height = 0.0;
 
-    /*Simulation variables */
-    //Variables to create a visualization
+    /* Simulation variables */
+    // Variables to create a visualization
     public final Mechanism2d elevSimMech = new Mechanism2d(1.5, 1.5);
     private final MechanismRoot2d elevRoot = elevSimMech.getRoot("elevRoot", 0.75, 0.1);
     public final MechanismLigament2d elevViz = elevRoot
-    .append(new MechanismLigament2d("elevatorLigament", 2, 90, 70.0, new Color8Bit(Color.kBlanchedAlmond)));
+            .append(new MechanismLigament2d("elevatorLigament", 2, 90, 70.0, new Color8Bit(Color.kBlanchedAlmond)));
 
-    //simulation of the PHYSICS of the mechanisms (this is what does the calculations/makes the sim useful & cool)
-    private final ElevatorSim elevSim = new ElevatorSim(DCMotor.getFalcon500(2), 12, 10, 0.05, 0.0, 3.0, true, 0.6);
+    // simulation of the PHYSICS of the mechanisms (this is what does the
+    // calculations/makes the sim useful & cool)
+    private final ElevatorSim elevSim = new ElevatorSim(DCMotor.getKrakenX60(2), 12, 10, 0.05, 0.0, 3.0, true, 0.6);
 
     /* Constructor */
     public ElevatorSubsystem() {
-        if(Utils.isSimulation()){
+
+        if (Utils.isSimulation()) {
+            SmartDashboard.putData("elevSimMech", elevSimMech);
             elevatorMotor = new TalonFX(ELEVATOR_MOTOR_ID);
             elevatorFollowerMotor = new TalonFX(ELEVATOR_FOLLOWER_MOTOR_ID);
-            motionMagicVoltage = new MotionMagicVoltage(0);
-        }else{
+            motionMagicVoltage = new MotionMagicVoltage(elevViz.getLength());// use starting position(position is
+                                                                             // changed periodically)
+        } else {
             elevatorMotor = new TalonFX(ELEVATOR_MOTOR_ID, "kingKan");
             elevatorFollowerMotor = new TalonFX(ELEVATOR_FOLLOWER_MOTOR_ID, "kingKan");
-            motionMagicVoltage = new MotionMagicVoltage(0);
-            //try out later
-            // motionMagicVoltage = new MotionMagicVoltage(elevatorMotor.getPosition().getValueAsDouble());
+            motionMagicVoltage = new MotionMagicVoltage(0);// use starting position(position is changed periodically)
         }
 
-        /*Motor configs */
+        /* Motor configs */
         TalonFXConfiguration cfg = new TalonFXConfiguration();
 
         FeedbackConfigs fdb = cfg.Feedback;
         fdb.SensorToMechanismRatio = ELEVATOR_GEARSTACK;
 
         MotionMagicConfigs motionMagic = cfg.MotionMagic;
-        motionMagic.withMotionMagicCruiseVelocity(RotationsPerSecond.of(10))//1000
-                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(20))//2400
-                .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(1000));//500000
-
+        motionMagic.withMotionMagicCruiseVelocity(RotationsPerSecond.of(20))
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(40))
+                .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(0));
         Slot0Configs slot0 = cfg.Slot0;
-        slot0.kS = 0.0; // Add 0.25 V output to overcome static friction
-        slot0.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
-        slot0.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-        slot0.kG = 0.5297854;// .528 /*intended to counter gravity, added by us(not in documentation) */
-        slot0.kP = 30;//15// A position error of 0.2 rotations results in 12 V output
-        slot0.kI = 0; // No output for integrated error
-        slot0.kD = 1;//1.9// A velocity error of 1 rps results in 0.5 V output
 
-        CurrentLimitsConfigs currentLimits = cfg.CurrentLimits;
-        currentLimits.StatorCurrentLimit = ELEVATOR_MOTOR_CURRENT_LIMIT;
-        
+        /* gains for pid and ffe */
+        if (Utils.isSimulation()) {
+            slot0.kS = 0.0; // Add 0.25 V output to overcome static friction
+            slot0.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
+            slot0.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
+            slot0.kG = 0.5297854 / 2.947; /* intended to counter gravity, added by us(not in documentation) */
+            slot0.kP = 26;// A position error of 0.2 rotations results in 12 V output
+            slot0.kI = 0; // No output for integrated error
+            slot0.kD = 0.5;// 1.9// A velocity error of 1 rps results in 0.5 V output
+        } else {
+            slot0.kS = 0.0; // Add 0.25 V output to overcome static friction
+            slot0.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
+            slot0.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
+            slot0.kG = 0.5297854 / 2.947; /* intended to counter gravity, added by us(not in documentation) */
+            slot0.kP = 26;// A position error of 0.2 rotations results in 12 V output
+            slot0.kI = 0; // No output for integrated error
+            slot0.kD = 0.5;// 1.9// A velocity error of 1 rps results in 0.5 V output
+        }
+
+        // CurrentLimitsConfigs currentLimits = cfg.CurrentLimits;
+        // currentLimits.StatorCurrentLimit = ELEVATOR_MOTOR_CURRENT_LIMIT;
+
         MotorOutputConfigs motorOutput = cfg.MotorOutput;
         motorOutput.NeutralMode = NeutralModeValue.Brake;
-
 
         StatusCode leaderStatus = StatusCode.StatusCodeNotInitialized;
         for (int i = 0; i < 5; ++i) {
@@ -139,25 +151,24 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     /* Calculations */
     public double getElevatorEncoder() {
-        if(Utils.isSimulation()){
+        if (Utils.isSimulation()) {
             return elevViz.getLength();
-        }else{
+        } else {
             return (elevatorMotor.getRotorPosition().getValueAsDouble() * (Math.PI * 1.751 * 2) / 12.0) * -1.0;
         }
     }
 
     public boolean isNearGoal() {
-            return MathUtil.isNear(height, getElevatorEncoder(), 2);
+        return MathUtil.isNear(height, getElevatorEncoder(), 2);
     }
 
     public boolean issGigh() {
-            return getElevatorEncoder() > 30;
+        return getElevatorEncoder() > 30;
     }
 
     public boolean isAbove(double heightOfChoice) {
-            return getElevatorEncoder() > heightOfChoice;
+        return getElevatorEncoder() > heightOfChoice;
     }
-
 
     @Override
     public void periodic() {
@@ -165,14 +176,15 @@ public class ElevatorSubsystem extends SubsystemBase {
 
         if (Utils.isSimulation()) {
 
-            //height log - me=/6 // *2  //$$/3
-            //simencoder log - me *1 // *12 //$$*2
-            var change = (height/2) - (elevViz.getLength() * 3);
-            elevatorMotor.setControl(motionMagicVoltage.withPosition(change).withSlot(0));//my last pos height/6
+            // height log - me=/6 // *2 //$$/3
+            // simencoder log - me *1 // *12 //$$*2
+            var change = (height) - (elevViz.getLength());
+            elevatorMotor.setControl(motionMagicVoltage.withPosition(change).withSlot(0));// .withFeedForward(0.5297854
+                                                                                          // / 2.947)
 
-           // elevatorMotor.setControl(motionMagicVoltage.withPosition(height));//.withFeedForward();
+            // elevatorMotor.setControl(motionMagicVoltage.withPosition(height));//.withFeedForward();
 
-            elevSim.setInputVoltage(elevatorMotor.getMotorVoltage().getValueAsDouble());
+            elevSim.setInputVoltage(elevatorMotor.getMotorVoltage().getValueAsDouble() * 2);
             elevSim.update(0.01);
             elevViz.setLength(elevSim.getPositionMeters());
 
@@ -181,16 +193,12 @@ public class ElevatorSubsystem extends SubsystemBase {
             SmartDashboard.putNumber("Elevator set voltage", elevatorMotor.getMotorVoltage().getValueAsDouble());
             SmartDashboard.putNumber("Elevator follower set voltage",
                     elevatorFollowerMotor.getMotorVoltage().getValueAsDouble());
-            SmartDashboard.putNumber("Elevator Height", height / 6);
+            SmartDashboard.putNumber("Elevator Height", height);
             SmartDashboard.putNumber("sim elev position", elevSim.getPositionMeters());
-            SmartDashboard.putNumber("sim elev motor position", elevatorMotor.getPosition().getValueAsDouble());
 
         } else {
-            //elevatorMotor.setControl(motionMagicVoltage.withPosition(height / 6).withSlot(0));
-
-            // elevatorMotor.setVoltage(getEffort() * -1.0);//the old way (Using PID &
-            // feedforward)
-
+ 
+            //TODO add stuff for real life
             // dashboard stuff
             SmartDashboard.putNumber("Elevator Height", height);
             SmartDashboard.putBoolean("issGigh", issGigh());

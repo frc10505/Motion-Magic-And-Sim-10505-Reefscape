@@ -97,7 +97,8 @@ public class CoralSubsystem extends SubsystemBase {
         intakeRightConfig.idleMode(IdleMode.kBrake);
         intakeRightConfig.smartCurrentLimit(CORAL_MOTOR_CURRENT_LIMIT, CORAL_MOTOR_CURRENT_LIMIT);
         intakeRightConfig.inverted(true);
-        intakeRight.configure(intakeRightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);    }
+        intakeRight.configure(intakeRightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    }
 
     /*Other constructor, intended for use in simulation */
     public CoralSubsystem(CommandJoystick monkeyJoystick) {
