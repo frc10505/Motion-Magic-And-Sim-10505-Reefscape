@@ -28,7 +28,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
    // robotContainer.cameraFeedInit();
-  //  if(Utils.isSimulation()){
+  //  if(Utils.isSimulation() || Utils.isReplay()){
   //  robotContainer.vizSimInit();}
   // //  robotContainer.updateVizSim();
   }

@@ -11,15 +11,11 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -28,8 +24,8 @@ import java.util.Optional;
 
 public class Vision extends SubsystemBase{
 /*Cameras */
-public final PhotonCamera reefCam = new PhotonCamera("reefCam");
-public final PhotonCamera backCam = new PhotonCamera("backCam");
+private final PhotonCamera reefCam = new PhotonCamera("reefCam");
+private final PhotonCamera backCam = new PhotonCamera("backCam");
 
 /*field layout */
 private final AprilTagFieldLayout kFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
@@ -38,7 +34,6 @@ private final AprilTagFieldLayout kFieldLayout = AprilTagFieldLayout.loadField(A
     public static final int kHeightOfCamera = 3496;
     public static final Rotation2d kCameraFOV = Rotation2d.fromDegrees(90.0);
 
-    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
 
 
 public static final Transform3d kRobotToBackCamTransform = new Transform3d(
@@ -55,8 +50,8 @@ private final PhotonPoseEstimator backCamEstimator = new PhotonPoseEstimator(kFi
 /*Simulation */
 public final VisionSystemSim visionSim = new VisionSystemSim("Vision Sim");
 private final SimCameraProperties cameraProperties = new SimCameraProperties();
-private PhotonCameraSim reefCamSim = new PhotonCameraSim(reefCam, cameraProperties);
-private PhotonCameraSim backCamSim = new PhotonCameraSim(backCam, cameraProperties);
+public final PhotonCameraSim reefCamSim = new PhotonCameraSim(reefCam, cameraProperties);
+public final PhotonCameraSim backCamSim = new PhotonCameraSim(backCam, cameraProperties);
 
 
 public Vision() {
@@ -112,20 +107,33 @@ public Optional<EstimatedRobotPose> getReefCamEstimatedPose(){
         }
 
 public double getTargetSkew(PhotonCameraSim camera){
-    return camera.getCamera().getLatestResult().getBestTarget().getSkew();
-}
+    try{
+        return camera.getCamera().getLatestResult().getBestTarget().getSkew();
+        }catch (Exception e){
+            return 0.0;
+        }}
 
 public double getTargetYaw(PhotonCameraSim camera){
-    return camera.getCamera().getLatestResult().getBestTarget().getYaw();
-}
+    try{
+        return camera.getCamera().getLatestResult().getBestTarget().getYaw();
+        }catch (Exception e){
+            return 0.0;
+        }}
 
 public double getTargetPitch(PhotonCameraSim camera){
+    try{
     return camera.getCamera().getLatestResult().getBestTarget().getPitch();
+    }catch (Exception e){
+        return 0.0;
+    }
 }
 
 public Transform3d getTargetTransformation(PhotonCameraSim camera){
-    return camera.getCamera().getLatestResult().getBestTarget().getBestCameraToTarget();
-}
+    try{
+        return camera.getCamera().getLatestResult().getBestTarget().getBestCameraToTarget();
+        }catch (Exception e){
+            return new Transform3d();
+        }}
 
 
 // public double lastBackCamEstimateTimestamp = 0.0;
@@ -159,10 +167,6 @@ public void reset() {
 
 @Override
 public void periodic(){
-   // SmartDashboard.putNumber("Sim cam fps", reefCamSim.getVideoSimRaw().getActualFPS());
-//    Commands.race(
-//    bruh(),
-//     Commands.waitSeconds(0.02));
 
 
 getReefCamEstimatedPose().ifPresent(est -> {
@@ -177,6 +181,15 @@ getReefCamEstimatedPose().ifPresent(est -> {
     SmartDashboard.putNumber("reef cam target rotation y", getTargetTransformation(reefCamSim).getRotation().getY());
     SmartDashboard.putNumber("reef cam target rotation z", getTargetTransformation(reefCamSim).getRotation().getZ());
     SmartDashboard.putNumber("reef cam target ID", reefCamSim.getCamera().getLatestResult().getBestTarget().fiducialId);
+
+
+    SmartDashboard.putNumber("back cam target transform x", getTargetTransformation(backCamSim).getX());
+    SmartDashboard.putNumber("back cam target transform y", getTargetTransformation(backCamSim).getY());
+    SmartDashboard.putNumber("back cam target transform z", getTargetTransformation(backCamSim).getZ());
+    SmartDashboard.putNumber("back cam target rotation x", getTargetTransformation(backCamSim).getRotation().getX());
+    SmartDashboard.putNumber("back cam target rotation y", getTargetTransformation(backCamSim).getRotation().getY());
+    SmartDashboard.putNumber("back cam target rotation z", getTargetTransformation(backCamSim).getRotation().getZ());
+    SmartDashboard.putNumber("back cam target ID", backCamSim.getCamera().getLatestResult().getBestTarget().fiducialId);
 
 
 

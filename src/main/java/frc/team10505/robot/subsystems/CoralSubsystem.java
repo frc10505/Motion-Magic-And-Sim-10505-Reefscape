@@ -5,7 +5,6 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
@@ -29,8 +28,8 @@ public class CoralSubsystem extends SubsystemBase {
     // Motor controllers
     private final SparkMax intakeLeft = new SparkMax(CORAL_LEFT_MOTOR_ID, MotorType.kBrushless);
     private final SparkMax intakeRight = new SparkMax(CORAL_RIGHT_MOTOR_ID, MotorType.kBrushless);
-    private SparkMaxConfig intakeLeftConfig = new SparkMaxConfig();
-    private SparkMaxConfig intakeRightConfig = new SparkMaxConfig();
+    private final SparkMaxConfig intakeLeftConfig = new SparkMaxConfig();
+    private final SparkMaxConfig intakeRightConfig = new SparkMaxConfig();
 
     // Laser sensors
     private final LaserCan inLaser = new LaserCan(CORAL_IN_LASER_ID);
@@ -79,12 +78,12 @@ public class CoralSubsystem extends SubsystemBase {
     private final MechanismLigament2d donnyIntakeViz = donnysFreakySimRoot
             .append(new MechanismLigament2d("leftIntakeLigament", 0.4, 000));
 
-    private double simMotorSpeed = 0;
-    private double simSecondaryMotorSpeed = 0;
+    private double simMotorSpeed = 0;//ONLY USED FOR LOGGING AND SIM
+    private double simSecondaryMotorSpeed = 0;//ONLY USED FOR LOGGING AND SIM
 
     private CommandJoystick monkeyJoystick;
 
-    /* Constructor */
+    /** Constructor */
     public CoralSubsystem() {
         SmartDashboard.putData("coralIntake", coralIntakeMech);
 
@@ -100,7 +99,7 @@ public class CoralSubsystem extends SubsystemBase {
         intakeRight.configure(intakeRightConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
-    /*Other constructor, intended for use in simulation */
+    /**Other constructor, intended for use in simulation */
     public CoralSubsystem(CommandJoystick monkeyJoystick) {
         this.monkeyJoystick = monkeyJoystick;
         SmartDashboard.putData("coralIntake", coralIntakeMech);
@@ -118,8 +117,9 @@ public class CoralSubsystem extends SubsystemBase {
     }
 
     /* Calculations */
+    /**returns true if the laser reads a distance less than 50mm, or in sim, if joystick button 1 is pressed */
     public boolean inSensor() {
-        if (Utils.isSimulation()) {
+        if (Utils.isSimulation() || Utils.isReplay()) {
             return monkeyJoystick.button(1).getAsBoolean();
         } else {
             LaserCan.Measurement inMeas = inLaser.getMeasurement();
@@ -127,8 +127,9 @@ public class CoralSubsystem extends SubsystemBase {
         }
     }
 
+    /**returns true if the laser reads a distance less than 50mm, or in sim, if joystick button 2 is pressed*/
     public boolean outSensor() {
-        if (Utils.isSimulation()) {
+        if (Utils.isSimulation() || Utils.isReplay()) {
             return monkeyJoystick.button(2).getAsBoolean();
         } else {
             LaserCan.Measurement outMeas = outLaser.getMeasurement();
@@ -138,8 +139,9 @@ public class CoralSubsystem extends SubsystemBase {
     }
 
     /* BETTER commands to referense */
+    /**run end command that will stop the intake upon ending */
     public Command runIntake(double speed) {
-        if (Utils.isSimulation()) {
+        if (Utils.isSimulation() || Utils.isReplay()) {
             return runEnd(() -> {
                 simMotorSpeed = speed;
             }, () -> {
@@ -156,8 +158,9 @@ public class CoralSubsystem extends SubsystemBase {
         }
     }
 
+    //** run once command that sets the intake speeds */
     public Command setIntake(double speed) {
-        if (Utils.isSimulation()) {
+        if (Utils.isSimulation() || Utils.isReplay()) {
             return runOnce(() -> {
                 simMotorSpeed = speed;
             });
@@ -169,8 +172,9 @@ public class CoralSubsystem extends SubsystemBase {
         }
     }
 
+    /**run end command that is intended for L1 coral shots. Runs the left and right intake at different speeds. Stops both motors upon ending */
     public Command trough() {
-        if (Utils.isSimulation()) {
+        if (Utils.isSimulation() || Utils.isReplay()) {
 
             return runEnd(() -> {
                 simMotorSpeed = CORAL_TROUGH_LEFT_SPEED;
@@ -193,8 +197,9 @@ public class CoralSubsystem extends SubsystemBase {
         }
     }
 
+    /**run end command that intakes. Upon ending, it will use the runIntake command to run slowly until only the outSensor boolean is true */
     public Command slowEndIntake(double firstSpeed) {
-        if (Utils.isSimulation()) {
+        if (Utils.isSimulation() || Utils.isReplay()) {
             return runEnd(() -> {
                 simMotorSpeed = firstSpeed;
 
@@ -221,7 +226,7 @@ public class CoralSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
 
-        if (Utils.isSimulation()) {
+        if (Utils.isSimulation() || Utils.isReplay()) {
             if (runningStupidity) {
                 var sigmaCurrentPos = sigmaIntakeViz.getAngle();
                 var skibidiCurrentPos = skibidiIntakeViz.getAngle();
@@ -277,8 +282,7 @@ public class CoralSubsystem extends SubsystemBase {
             rightIntakeViz.setAngle(rightCurrentPos - (intakeRightSim.getAngularVelocityRPM() * 0.04));
 
         } else {
-            SmartDashboard.putBoolean("inSensor", inSensor());
-            SmartDashboard.putBoolean("outSensor", outSensor());
+           
             SmartDashboard.putNumber("left intake motor applied output", intakeLeft.getAppliedOutput());
             SmartDashboard.putNumber("right intake motor applied output", intakeRight.getAppliedOutput());
 

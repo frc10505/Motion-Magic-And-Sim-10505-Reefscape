@@ -70,12 +70,12 @@ public class RobotContainer {
         private final SendableChooser<Double> polarityChooser = new SendableChooser<>();
 
         public RobotContainer() {
-                if (Utils.isSimulation()) {
-                        drivetrainSubsys = TunerConstants.createDrivetrain(joystick);
+                if (Utils.isSimulation() || Utils.isReplay()) {
+                        drivetrainSubsys = TunerConstants.createDrivetrain(joystick, vision);
                         coralSubsys = new CoralSubsystem(joystick);
 
                 } else {
-                        drivetrainSubsys = TunerConstants.createDrivetrain();
+                        drivetrainSubsys = TunerConstants.createDrivetrain(vision);
                         coralSubsys = new CoralSubsystem();
                 }
 
@@ -143,7 +143,7 @@ public class RobotContainer {
          * commands for the subsytems.
          */
         private void configDefaultCommands() {
-                if (Utils.isSimulation()) {
+                if (Utils.isSimulation() || Utils.isReplay()) {
 
                         drivetrainSubsys.setDefaultCommand(drivetrainSubsys.applyRequest(() -> drive
                                         .withVelocityX(-xboxController.getLeftX() * polarityChooser.getSelected()
@@ -172,12 +172,12 @@ public class RobotContainer {
          */
         private void configButtonBindings() {
 
-                if (Utils.isSimulation()) {
-                        joystick.button(1).onTrue(elevatorSubsys.setHeight(0));// coralSubsys.slowEndIntake());//
-                        joystick.button(2).onTrue(elevatorSubsys.setHeight(0.15));// coralSubsys.trough().until (() ->
-                                                                               // !coralSubsys.outSensor()));
-                        joystick.button(3).onTrue(elevatorSubsys.setHeight(0.3));
-                        joystick.button(4).onTrue(elevatorSubsys.setHeight(0.5));
+                if (Utils.isSimulation() || Utils.isReplay()) {
+                        joystick.button(1).onTrue(superStructure.seekLeftIntakeStation());
+                        // joystick.button(1).onTrue(elevatorSubsys.setHeight(0));// coralSubsys.slowEndIntake());//
+                        // joystick.button(2).onTrue(elevatorSubsys.setHeight(0.15));// coralSubsys.trough().until (() ->!coralSubsys.outSensor()));
+                        // joystick.button(3).onTrue(elevatorSubsys.setHeight(0.3));
+                        // joystick.button(4).onTrue(elevatorSubsys.setHeight(0.5));
 
                         // joystick.button(1).onTrue(algaeSubsys.setAngle(PIVOT_DOWN));
                         // joystick.button(2).onTrue(algaeSubsys.setAngle(-30));
@@ -234,13 +234,13 @@ public class RobotContainer {
                                         drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(-0.4)
                                                         .withVelocityY(0.0)
                                                         .withRotationalRate(0.0)))
-                                        .onFalse(drivetrainSubsys.stop());
+                                        .onFalse(drivetrainSubsys.autoStop());//BAD BAD BAD (maybe not ig)
 
                         xboxController.povDown().whileTrue(
                                         drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.4)
                                                         .withVelocityY(0.0)
                                                         .withRotationalRate(0.0)))
-                                        .onFalse(drivetrainSubsys.stop());
+                                        .onFalse(drivetrainSubsys.autoStop()); //BAD BAD BAD (maybe not ig)
 
                         xboxController.povLeft().whileTrue(
                                         drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.0)

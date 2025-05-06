@@ -37,9 +37,9 @@ public class AlgaeSubsystem extends SubsystemBase {
     /* Variables */
     // motor controllers
     private final SparkMax intakeMotor = new SparkMax(ALGAE_INTAKE_MOTOR_ID, MotorType.kBrushless);
-    private SparkMaxConfig intakeMotorConfig = new SparkMaxConfig();
     private final SparkMax pivotMotor = new SparkMax(ALGAE_PIVOT_MOTOR_ID, MotorType.kBrushless);
-    private SparkMaxConfig pivotMotorConfig = new SparkMaxConfig();
+    private final SparkMaxConfig intakeMotorConfig = new SparkMaxConfig();
+    private final SparkMaxConfig pivotMotorConfig = new SparkMaxConfig();
 
     // Encoder
     private double absoluteOffset = 180.0;
@@ -51,7 +51,7 @@ public class AlgaeSubsystem extends SubsystemBase {
 
     private double pivotSetpoint = -90; // 90
     public boolean coasting = false;
-    private double intakeSpeed = 0;//ONLY USED FOR LOGGING
+    private double intakeSpeed = 0;//ONLY USED FOR LOGGING AND SIM
 
     /* Sim Variables*/ 
     private final double simStartingAngle = 0;
@@ -76,13 +76,14 @@ public class AlgaeSubsystem extends SubsystemBase {
 
     /* Our constructor */
     public AlgaeSubsystem() {
-        if(Utils.isSimulation()){
+        if(Utils.isSimulation() || Utils.isReplay()){
             pivotController = new PIDController(1.6, 0, 0.01);
             pivotFeedforward = new ArmFeedforward(0, 0.1719, 0.4, 0.1);
         }else{
-            pivotController = new PIDController(0.1, 0, 0);
-            pivotFeedforward = new ArmFeedforward(0.01, 0.1, 0.4, 0.1);
+            pivotController = new PIDController(0.1, 0, 0);//TODO TUNE IRL
+            pivotFeedforward = new ArmFeedforward(0.01, 0.1, 0.4, 0.1);//TODO TUNE IRL
         }
+
         // pivot motor and encoder configs
         pivotMotorConfig.idleMode(IdleMode.kBrake);
         pivotMotorConfig.smartCurrentLimit(ALGAE_PIVOT_MOTOR_CURRENT_LIMIT, ALGAE_PIVOT_MOTOR_CURRENT_LIMIT);
@@ -100,10 +101,9 @@ public class AlgaeSubsystem extends SubsystemBase {
     }
 
     /* Methods */
-
     //calculations
     public double getPivotEncoder() {
-        if(Utils.isSimulation()){
+        if(Utils.isSimulation() || Utils.isReplay()){
             return pivotViz.getAngle();
         }else{
             return (-pivotEncoder.getPosition() + absoluteOffset);
@@ -123,18 +123,21 @@ public class AlgaeSubsystem extends SubsystemBase {
         });
     }
 
+    /**Run command that continually sets the pivot motor voltage to the inputted parameter */
     public Command setVoltage(double voltage) {
         return run(() -> {
             pivotMotor.setVoltage(voltage);
         });
     }
 
+    /** run once command that stops the pivot motor */
     public Command stopPivot() {
         return runOnce(() -> {
             pivotMotor.stopMotor();
         });
     }
 
+    /**Changes the pivot idle mode to coast and stops PID from calculating */
     public Command coastPivot() {
         return run(() -> {
             pivotMotorConfig.idleMode(IdleMode.kCoast);
@@ -142,6 +145,7 @@ public class AlgaeSubsystem extends SubsystemBase {
         });
     }
 
+    /**Undoes the coastPivot command. Sets the pivot idle mode to brake and enables PID */
     public Command brakePivot() {
         return run(() -> {
             pivotMotorConfig.idleMode(IdleMode.kBrake);
@@ -152,6 +156,7 @@ public class AlgaeSubsystem extends SubsystemBase {
 
 
     /* intake commands to reference */
+    /**runOnce command that sets the intake motor to a speed of the inputted parameter */
     public Command setIntake(double speed){
         return runOnce(() ->{
             intakeMotor.set(speed);
@@ -159,13 +164,7 @@ public class AlgaeSubsystem extends SubsystemBase {
         });
     }
 
-    // public Command intakeReverse() {
-    //     return runOnce(() -> {
-    //         intakeMotor.set(-intakeSpeed);
-    //         intakeSpeed = -intakeSpeed;
-    //     });
-    // }
-
+    /**runOnce command that sets the intake motor to a speed of ZERO */
     public Command stopIntake() {
         return runOnce(() -> {
             intakeMotor.set(0);
@@ -176,20 +175,23 @@ public class AlgaeSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        //dashboard stuff
         SmartDashboard.putNumber("Pivot Setpoint", pivotSetpoint);
         SmartDashboard.putNumber("Pivot Encoder", getPivotEncoder());
         SmartDashboard.putNumber("Pivot Calculated Effort", getEffort());
         SmartDashboard.putNumber("Algae Intake Speed", intakeSpeed);
 
-        if (Utils.isSimulation()) {
+        //Sim updating stuff
+        if (Utils.isSimulation() || Utils.isReplay()) {
             pivotSim.setInput(getEffort());
             pivotSim.update(0.01);
             pivotViz.setAngle(Units.radiansToDegrees(pivotSim.getAngleRads()));
     
             intakeSim.setInput(intakeSpeed);
             intakeSim.update(0.01);
-            intakeRoot.setPosition((Math.cos(Units.degreesToRadians(pivotViz.getAngle())) * 0.56) + 0.75, (Math.sin(Units.degreesToRadians(pivotViz.getAngle())) * 0.56) + 0.75);
             intakeViz.setAngle(Units.radiansToDegrees(intakeViz.getAngle() + (intakeSpeed * 0.05)));
+            //woah so cool. uses trigonometry so the intake wheel can follow the pivot on the sim viz
+            intakeRoot.setPosition((Math.cos(Units.degreesToRadians(pivotViz.getAngle())) * 0.56) + 0.75, (Math.sin(Units.degreesToRadians(pivotViz.getAngle())) * 0.56) + 0.75);
 
             SmartDashboard.putNumber("Sim Algae Intake Viz Angle", intakeViz.getAngle());
 
@@ -197,7 +199,7 @@ public class AlgaeSubsystem extends SubsystemBase {
             if (!coasting) {
                 pivotMotor.setVoltage(getEffort());
             }
-            SmartDashboard.putNumber("Intake Motor Output", intakeMotor.getAppliedOutput());
+            SmartDashboard.putNumber("Algae Intake Motor Output", intakeMotor.getAppliedOutput());
             SmartDashboard.putNumber("Pivot Motor Output", pivotMotor.getAppliedOutput());
         }
     }

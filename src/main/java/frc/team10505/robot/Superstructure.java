@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team10505.robot.subsystems.DrivetrainSubsystem;
 import frc.team10505.robot.subsystems.ElevatorSubsystem;
@@ -119,6 +120,13 @@ public class Superstructure {
                 elevatorSubsystem.setHeight(0.0));
     }
 
+    public Command seekLeftIntakeStation(){
+        return parallel(
+            coralSubsystem.runIntake(CORAL_INTAKE_SPEED).unless(() -> coralSubsystem.inSensor()),
+            drivetrainSubsystem.goToLeftStation()
+        );
+    }
+
     // COMMANDS FOR AUTONS
     public Command autoIntakeCoral() {
         return coralSubsystem.slowEndIntake(CORAL_INTAKE_SPEED).until(() -> (coralSubsystem.outSensor() && coralSubsystem.inSensor()));
@@ -144,7 +152,8 @@ public class Superstructure {
         return Commands.sequence(
                 elevatorSubsystem.setHeight(ELEV_L4), 
                 Commands.waitUntil(() -> elevatorSubsystem.isNearGoal()),
-                coralSubsystem.setIntake(CORAL_INTAKE_SPEED),//What the gaf is this .37? 
+                coralSubsystem.setIntake(CORAL_INTAKE_SPEED),//TODO figure out what the gaf is this .37? 
+                //NOTE are we stupid? probably....... :(
                 //other auto scores use .25,  and i think teleop l4 scoring uses 0.05
                 Commands.race(
                         Commands.waitUntil(() -> !coralSubsystem.outSensor()), 
@@ -192,7 +201,7 @@ public class Superstructure {
         return Commands.sequence(
                 drivetrainSubsystem.applyRequest(() -> autoRobotDrive.withSpeeds(new ChassisSpeeds(0.0, 0.6, 0.0)))
                         .until(() -> !drivetrainSubsystem.autonSeesLeftSensor()),
-                drivetrainSubsystem.stop()
+                drivetrainSubsystem.autoStop()
         );
     }
 
@@ -200,7 +209,7 @@ public class Superstructure {
         return Commands.sequence(
                 drivetrainSubsystem.applyRequest(() -> autoRobotDrive.withSpeeds(new ChassisSpeeds(0.0, -0.75, 0.0)))
                         .until(() -> !drivetrainSubsystem.autonSeesRightSensor()), // 0.3
-                drivetrainSubsystem.stop()
+                drivetrainSubsystem.autoStop()
         );
     }
 
@@ -208,7 +217,7 @@ public class Superstructure {
         return Commands.sequence(
                 drivetrainSubsystem.applyRequest(() -> autoRobotDrive.withSpeeds(new ChassisSpeeds(0.6, 0.0, 0.0)))
                         .until(() -> (drivetrainSubsystem.seesLeftSensorClose() | drivetrainSubsystem.seesRightSensorClose())),
-                drivetrainSubsystem.stop()
+                drivetrainSubsystem.autoStop()
         // Commands.none()
         );
     }
