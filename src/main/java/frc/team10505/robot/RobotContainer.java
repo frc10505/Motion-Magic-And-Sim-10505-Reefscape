@@ -12,7 +12,6 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -28,14 +27,11 @@ import frc.team10505.robot.generated.TunerConstants;
 import frc.team10505.robot.subsystems.AlgaeSubsystem;
 import frc.team10505.robot.subsystems.CoralSubsystem;
 import static edu.wpi.first.units.Units.*;
-import static frc.team10505.robot.Constants.AlgaeConstants.*;
-import static frc.team10505.robot.Constants.ElevatorConstants.*;
-
-
+import static frc.team10505.robot.Constants.*;
 
 public class RobotContainer {
 
-        private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); 
+        private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
         private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
         /* Setting up bindings for necessary control of the swerve drive platform */
@@ -44,7 +40,8 @@ public class RobotContainer {
 
         private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
                         .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
-                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive
+                                                                                 // motors
 
         private final Telemetry logger = new Telemetry(MaxSpeed);
 
@@ -52,8 +49,10 @@ public class RobotContainer {
         private final CommandXboxController xboxController = new CommandXboxController(0);
         private final CommandXboxController xboxController2 = new CommandXboxController(1);
 
-        private final CommandJoystick joystick = new CommandJoystick(0);
-        private final CommandJoystick joystick2 = new CommandJoystick(1);
+        private CommandJoystick joystick;
+        private CommandJoystick joystick2;
+        private CommandJoystick joystick3;
+        private CommandJoystick joystick4;
 
         /* Subsystems */
         private final ElevatorSubsystem elevatorSubsys = new ElevatorSubsystem();
@@ -71,9 +70,15 @@ public class RobotContainer {
 
         public RobotContainer() {
                 if (Utils.isSimulation() || Utils.isReplay()) {
+                        joystick = new CommandJoystick(0);
+                        joystick2 = new CommandJoystick(1);
+                        joystick3 = new CommandJoystick(2);
+                        joystick4 = new CommandJoystick(3);
+
                         drivetrainSubsys = TunerConstants.createDrivetrain(joystick, vision);
                         coralSubsys = new CoralSubsystem(joystick);
 
+                        vision.reset();
                 } else {
                         drivetrainSubsys = TunerConstants.createDrivetrain(vision);
                         coralSubsys = new CoralSubsystem();
@@ -82,6 +87,7 @@ public class RobotContainer {
                 superStructure = new Superstructure(coralSubsys, algaeSubsys, elevatorSubsys,
                                 drivetrainSubsys);
 
+                // commands registered to pathplanner
                 NamedCommands.registerCommand("Test", Commands.print("auto command stuff is working"));
 
                 NamedCommands.registerCommand("setElevToZero", elevatorSubsys.setHeight(ELEV_DOWN));
@@ -89,27 +95,21 @@ public class RobotContainer {
                 NamedCommands.registerCommand("setElevTo24", elevatorSubsys.setHeight(ELEV_L3));
                 NamedCommands.registerCommand("setElevTo48/5", elevatorSubsys.setHeight(ELEV_L4));
 
-                NamedCommands.registerCommand("intakeCoral", superStructure.intakeCoral());
-                NamedCommands.registerCommand("dropCoral", superStructure.dropCoral());
-
                 NamedCommands.registerCommand("autoScoreCoralL4", superStructure.autoScoreCoralL4());
                 NamedCommands.registerCommand("autoScoreCoralL2", superStructure.autoScoreCoralL2());
                 NamedCommands.registerCommand("autoScoreCoralL1", superStructure.autoScoreCoralL1());
 
-                NamedCommands.registerCommand("autoElevDown", superStructure.autoElevDown());
                 NamedCommands.registerCommand("autoL4Bump", superStructure.autoL4Bump());
 
-                NamedCommands.registerCommand("autoAlignLeft", superStructure.autoAlignLeft());
-                NamedCommands.registerCommand("autoAlignRight",superStructure.autoAlignRight());
-                NamedCommands.registerCommand("autoDriveForward", superStructure.autoDriveForward());
+                NamedCommands.registerCommand("intakeCoral", superStructure.intakeCoral());
+                NamedCommands.registerCommand("dropCoral", superStructure.dropCoral());
+
+                NamedCommands.registerCommand("svsuAutoAlignLeft", superStructure.autoAlignLeft());
+                NamedCommands.registerCommand("svsuAutoAlignRight", superStructure.autoAlignRight());
 
                 NamedCommands.registerCommand("raisinPivot", algaeSubsys.setAngle(10));
                 NamedCommands.registerCommand("setAlgaeIntake", (algaeSubsys.setIntake(0.5)));
                 NamedCommands.registerCommand("stopAlgaeIntake", (algaeSubsys.stopIntake()));
-
-                NamedCommands.registerCommand("svsuAutoAlignLeft", superStructure.autoAlignLeft());
-                NamedCommands.registerCommand("svsuAutoAlignRight",
-                                superStructure.autoAlignRight());
 
                 NamedCommands.registerCommand("autoBombsAway", superStructure.autonBombsAway());
                 NamedCommands.registerCommand("autonDetonateFirst", superStructure.autonDetonateFirst());
@@ -123,9 +123,9 @@ public class RobotContainer {
 
                 drivetrainSubsys.configPathplanner();
 
-                // autoChooser = AutoBuilder.buildAutoChooser();
                 svsuAutoChooser = AutoBuilder.buildAutoChooser();
 
+                // Polarity chooser to be able to make the drive direction opposite
                 SmartDashboard.putData("Polarity Chooser", polarityChooser);
                 polarityChooser.setDefaultOption("Default", 1.0);
                 polarityChooser.addOption("positive", 1.0);
@@ -135,7 +135,6 @@ public class RobotContainer {
                 configButtonBindings();
                 configAutonomous();
 
-                vision.reset();
         }
 
         /**
@@ -173,11 +172,12 @@ public class RobotContainer {
         private void configButtonBindings() {
 
                 if (Utils.isSimulation() || Utils.isReplay()) {
-                        joystick.button(1).onTrue(superStructure.seekLeftIntakeStation());
-                        // joystick.button(1).onTrue(elevatorSubsys.setHeight(0));// coralSubsys.slowEndIntake());//
-                        // joystick.button(2).onTrue(elevatorSubsys.setHeight(0.15));// coralSubsys.trough().until (() ->!coralSubsys.outSensor()));
-                        // joystick.button(3).onTrue(elevatorSubsys.setHeight(0.3));
-                        // joystick.button(4).onTrue(elevatorSubsys.setHeight(0.5));
+                        //joystick.button(1).onTrue(superStructure.seekLeftIntakeStation());
+                        joystick.button(1).onTrue(elevatorSubsys.setHeight(0));// coralSubsys.slowEndIntake());//
+                        joystick.button(2).onTrue(elevatorSubsys.setHeight(0.15));// coralSubsys.trough().until (()
+                                                                                  // ->!coralSubsys.outSensor()));
+                        joystick.button(3).onTrue(elevatorSubsys.setHeight(0.3));
+                        joystick.button(4).onTrue(elevatorSubsys.setHeight(0.5));
 
                         // joystick.button(1).onTrue(algaeSubsys.setAngle(PIVOT_DOWN));
                         // joystick.button(2).onTrue(algaeSubsys.setAngle(-30));
@@ -190,6 +190,8 @@ public class RobotContainer {
                         joystick2.button(1).whileTrue(coralSubsys.runIntake(5));
 
                 } else {
+
+                        //TODO check w comp code
                         // bindings for the xbox controller
                         xboxController.leftBumper().onTrue(algaeSubsys.setIntake(-ALGAE_INTAKE_NORMAL_SPEED))
                                         .onFalse(algaeSubsys.stopIntake());
@@ -225,7 +227,7 @@ public class RobotContainer {
                         xboxController.a().onTrue(algaeSubsys.setAngle(-18));
                         xboxController.b().onTrue(algaeSubsys.setIntake(0.2)).onFalse(algaeSubsys.stopIntake());
                         xboxController.x().onTrue(algaeSubsys.setAngle(-90));
-                        xboxController.y().onTrue(algaeSubsys.setAngle(10)); 
+                        xboxController.y().onTrue(algaeSubsys.setAngle(10));
 
                         xboxController.start().onTrue(resetGyro());
                         xboxController.back().onTrue(resetGyro180());
@@ -234,13 +236,13 @@ public class RobotContainer {
                                         drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(-0.4)
                                                         .withVelocityY(0.0)
                                                         .withRotationalRate(0.0)))
-                                        .onFalse(drivetrainSubsys.autoStop());//BAD BAD BAD (maybe not ig)
+                                        .onFalse(drivetrainSubsys.autoStop());// BAD BAD BAD (maybe not ig)
 
                         xboxController.povDown().whileTrue(
                                         drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.4)
                                                         .withVelocityY(0.0)
                                                         .withRotationalRate(0.0)))
-                                        .onFalse(drivetrainSubsys.autoStop()); //BAD BAD BAD (maybe not ig)
+                                        .onFalse(drivetrainSubsys.autoStop()); // BAD BAD BAD (maybe not ig)
 
                         xboxController.povLeft().whileTrue(
                                         drivetrainSubsys.applyRequest(() -> robotDrive.withVelocityX(0.0)
@@ -256,7 +258,6 @@ public class RobotContainer {
                                                         .withRotationalRate(0.0))
                                                         .until(() -> !drivetrainSubsys.seesRightSensor()));
 
-                
                         // operator bindings
                         xboxController2.povUp().onTrue(superStructure.outputTopCoral());
                         xboxController2.povDown().onTrue(superStructure.intakeCoral());// .onFalse(coralSubsys.stop());
@@ -308,11 +309,6 @@ public class RobotContainer {
                 return svsuAutoChooser.getSelected();// autoChooser.getSelected();
         }
 
-        public void updateDriveSensors() {
-                SmartDashboard.putBoolean("left drive sensor", drivetrainSubsys.seesLeftSensor());
-                SmartDashboard.putBoolean("right drive sensor", drivetrainSubsys.seesRightSensor());
-        }
-
         // called periodically in robot.java, updates all our pose estimation stuff
         public void updatePose() {
                 // puts the drivetrain pose on our dashboards
@@ -328,41 +324,36 @@ public class RobotContainer {
         // private VisionSystemSim vizSim = new VisionSystemSim("Reefscape Sim");
 
         // public void vizSimInit() {
-        //         vizSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded));
+        // vizSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded));
         // }
 
         // public void updateVizSim() {
-        //         vizSim.update(drivetrainSubsys.getState().Pose);
-        //         vizSim.getDebugField();
+        // vizSim.update(drivetrainSubsys.getState().Pose);
+        // vizSim.getDebugField();
         // }
 
-       
-        
-        public void updateVisionPose(){
-
+        public void updateVisionPose() {
 
                 vision.updateViz(drivetrainSubsys.getState().Pose);
 
-        
+                // if the camera has a tag in sight, it will calculate a pose and add to the
+                // drivetrain
 
-        // if the camera has a tag in sight, it will calculate a pose and add to the
-        // drivetrain
+                try {
 
-        try {
+                        var visionEst = vision.simGetReefCamEstimatedPose();
+                        visionEst.ifPresent(est -> {
+                                drivetrainSubsys.addVisionMeasurement(est.estimatedPose.toPose2d(),
+                                                est.timestampSeconds);
+                                SmartDashboard.putNumber("sim reef cam pose x", est.estimatedPose.toPose2d().getX());
+                                SmartDashboard.putNumber("sim reef cam pose y", est.estimatedPose.toPose2d().getY());
+                                SmartDashboard.putNumber("sim reef cam pose rot",
+                                                est.estimatedPose.toPose2d().getRotation().getDegrees());
+                        });
 
-            var visionEst = vision.simGetReefCamEstimatedPose();
-            visionEst.ifPresent(est -> {
-                drivetrainSubsys.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds);
-                SmartDashboard.putNumber("sim reef cam pose x", est.estimatedPose.toPose2d().getX());
-                SmartDashboard.putNumber("sim reef cam pose y", est.estimatedPose.toPose2d().getY());
-                SmartDashboard.putNumber("sim reef cam pose rot", est.estimatedPose.toPose2d().getRotation().getDegrees());
-            });
-
-           
-
-        } catch (Exception e) {
-            Commands.print("reef cam pose failed");
-        }
+                } catch (Exception e) {
+                        Commands.print("reef cam pose failed");
+                }
         }
 
 }

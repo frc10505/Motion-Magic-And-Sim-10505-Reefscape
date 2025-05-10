@@ -21,8 +21,8 @@ import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import au.grapplerobotics.LaserCan;
 
-import static frc.team10505.robot.subsystems.HardwareConstants.*;
-import static frc.team10505.robot.Constants.CoralConstants.*;
+import static frc.team10505.robot.Constants.HardwareConstants.*;
+import static frc.team10505.robot.Constants.*;
 
 public class CoralSubsystem extends SubsystemBase {
     // Motor controllers
@@ -34,6 +34,9 @@ public class CoralSubsystem extends SubsystemBase {
     // Laser sensors
     private final LaserCan inLaser = new LaserCan(CORAL_IN_LASER_ID);
     private final LaserCan outLaser = new LaserCan(CORAL_OUT_LASER_ID);
+
+    private double motorSpeed = 0;//ONLY USED FOR LOGGING AND SIM
+    private double secondaryMotorSpeed = 0;//ONLY USED FOR LOGGING AND SIM
 
     // Sim Flying Wheeels
     private final Color8Bit red = new Color8Bit(Color.kFirstRed);
@@ -52,7 +55,6 @@ public class CoralSubsystem extends SubsystemBase {
 
     private final MechanismRoot2d inSensorRoot = coralIntakeMech.getRoot("inSensorRoot", 1.5, 1);
     private final MechanismRoot2d outSensorRoot = coralIntakeMech.getRoot("outSensorRoot", 1.5, 0.2);
-
 
     private final MechanismRoot2d sigmaSimRoot = coralIntakeMech.getRoot("sigmaRoot", .6, 0.6);
     private final MechanismRoot2d skibidiSimRoot = coralIntakeMech.getRoot("skbidiRoot", 2.4, 0.6);
@@ -78,15 +80,10 @@ public class CoralSubsystem extends SubsystemBase {
     private final MechanismLigament2d donnyIntakeViz = donnysFreakySimRoot
             .append(new MechanismLigament2d("leftIntakeLigament", 0.4, 000));
 
-    private double simMotorSpeed = 0;//ONLY USED FOR LOGGING AND SIM
-    private double simSecondaryMotorSpeed = 0;//ONLY USED FOR LOGGING AND SIM
-
     private CommandJoystick monkeyJoystick;
 
-    /** Constructor */
+    /** Constructor for IRL*/
     public CoralSubsystem() {
-        SmartDashboard.putData("coralIntake", coralIntakeMech);
-
         // Left intake config
         intakeLeftConfig.idleMode(IdleMode.kBrake);
         intakeLeftConfig.smartCurrentLimit(CORAL_MOTOR_CURRENT_LIMIT, CORAL_MOTOR_CURRENT_LIMIT);
@@ -119,7 +116,7 @@ public class CoralSubsystem extends SubsystemBase {
     /* Calculations */
     /**returns true if the laser reads a distance less than 50mm, or in sim, if joystick button 1 is pressed */
     public boolean inSensor() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (Utils.isSimulation()) {
             return monkeyJoystick.button(1).getAsBoolean();
         } else {
             LaserCan.Measurement inMeas = inLaser.getMeasurement();
@@ -129,7 +126,7 @@ public class CoralSubsystem extends SubsystemBase {
 
     /**returns true if the laser reads a distance less than 50mm, or in sim, if joystick button 2 is pressed*/
     public boolean outSensor() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (Utils.isSimulation()) {
             return monkeyJoystick.button(2).getAsBoolean();
         } else {
             LaserCan.Measurement outMeas = outLaser.getMeasurement();
@@ -143,9 +140,9 @@ public class CoralSubsystem extends SubsystemBase {
     public Command runIntake(double speed) {
         if (Utils.isSimulation() || Utils.isReplay()) {
             return runEnd(() -> {
-                simMotorSpeed = speed;
+                motorSpeed = speed;
             }, () -> {
-                simMotorSpeed = 0;
+                motorSpeed = 0;
             });
         } else {
             return runEnd(() -> {
@@ -162,7 +159,7 @@ public class CoralSubsystem extends SubsystemBase {
     public Command setIntake(double speed) {
         if (Utils.isSimulation() || Utils.isReplay()) {
             return runOnce(() -> {
-                simMotorSpeed = speed;
+                motorSpeed = speed;
             });
         } else {
             return runOnce(() -> {
@@ -177,13 +174,13 @@ public class CoralSubsystem extends SubsystemBase {
         if (Utils.isSimulation() || Utils.isReplay()) {
 
             return runEnd(() -> {
-                simMotorSpeed = CORAL_TROUGH_LEFT_SPEED;
-                simSecondaryMotorSpeed = CORAL_TROUGH_RIGHT_SPEED;
+                motorSpeed = CORAL_TROUGH_LEFT_SPEED;
+                secondaryMotorSpeed = CORAL_TROUGH_RIGHT_SPEED;
 
             },
                     () -> {
-                        simMotorSpeed = 0;
-                        simSecondaryMotorSpeed = 0;
+                        motorSpeed = 0;
+                        secondaryMotorSpeed = 0;
                     });
         } else {
             return runEnd(() -> {
@@ -201,7 +198,7 @@ public class CoralSubsystem extends SubsystemBase {
     public Command slowEndIntake(double firstSpeed) {
         if (Utils.isSimulation() || Utils.isReplay()) {
             return runEnd(() -> {
-                simMotorSpeed = firstSpeed;
+                motorSpeed = firstSpeed;
 
             },
                     () -> {
@@ -225,18 +222,27 @@ public class CoralSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        //dashboard stuff
+        SmartDashboard.putNumber("Motor speed", motorSpeed);
+        SmartDashboard.putNumber("Secondary motor speed", secondaryMotorSpeed);
+        SmartDashboard.putNumber("left intake motor applied output", intakeLeft.getAppliedOutput());
+        SmartDashboard.putNumber("right intake motor applied output", intakeRight.getAppliedOutput());
+        SmartDashboard.putBoolean("inSensor", inSensor());
+        SmartDashboard.putBoolean("outSensor", outSensor());
 
+        //sim stuff
         if (Utils.isSimulation() || Utils.isReplay()) {
+            //stuff only if we are being stupid lol
             if (runningStupidity) {
                 var sigmaCurrentPos = sigmaIntakeViz.getAngle();
                 var skibidiCurrentPos = skibidiIntakeViz.getAngle();
                 var donnyCurrentPos = donnyIntakeViz.getAngle();
                 var walterCurrentPos = walterIntakeViz.getAngle();
 
-                var sigmaChange = simMotorSpeed * Math.random() * 14;
-                var skibidiChange = simMotorSpeed * Math.random() * 8;
-                var donnyChange = simMotorSpeed * Math.random() * 5;
-                var walterChange = simMotorSpeed * Math.random() * 5;
+                var sigmaChange = motorSpeed * Math.random() * 14;
+                var skibidiChange = motorSpeed * Math.random() * 8;
+                var donnyChange = motorSpeed * Math.random() * 5;
+                var walterChange = motorSpeed * Math.random() * 5;
 
                 sigmaIntakeViz.setAngle(sigmaCurrentPos + sigmaChange);
                 skibidiIntakeViz.setAngle(skibidiCurrentPos - skibidiChange);
@@ -244,24 +250,25 @@ public class CoralSubsystem extends SubsystemBase {
                 walterIntakeViz.setAngle((walterCurrentPos * walterChange * 180));
             }
 
-            SmartDashboard.putBoolean("inSensor", inSensor());
-            SmartDashboard.putBoolean("outSensor", outSensor());
-
             SmartDashboard.putNumber("Sim left intake viz angle", leftIntakeViz.getAngle());
             SmartDashboard.putNumber("Sim right intake viz angle", rightIntakeViz.getAngle());
-            SmartDashboard.putNumber("Sim motor speed", simMotorSpeed);
 
             var leftCurrentPos = leftIntakeViz.getAngle();
             var rightCurrentPos = rightIntakeViz.getAngle();
 
-            intakeLeftSim.setInput(simMotorSpeed);
+            intakeLeftSim.setInput(motorSpeed);
             intakeLeftSim.update(0.001);
 
-            if(simSecondaryMotorSpeed == 0){
-                intakeRightSim.setInput(simSecondaryMotorSpeed);
+            if(secondaryMotorSpeed == 0){
+                intakeRightSim.setInput(secondaryMotorSpeed);
+                intakeRightSim.update(0.001);
             } else {
-                intakeRightSim.setInput(simMotorSpeed);
+                intakeRightSim.setInput(motorSpeed);
+                intakeRightSim.update(0.001);
             }
+
+            leftIntakeViz.setAngle(leftCurrentPos + (intakeLeftSim.getAngularVelocityRPM() * 0.04));
+            rightIntakeViz.setAngle(rightCurrentPos - (intakeRightSim.getAngularVelocityRPM() * 0.04));
 
             if(inSensor()){
                 inSensor.setColor(green);
@@ -274,18 +281,6 @@ public class CoralSubsystem extends SubsystemBase {
             } else{
                 outSensor.setColor(red);
             }
-
-            intakeRightSim.setInput(simMotorSpeed);
-            intakeRightSim.update(0.001);
-
-            leftIntakeViz.setAngle(leftCurrentPos + (intakeLeftSim.getAngularVelocityRPM() * 0.04));
-            rightIntakeViz.setAngle(rightCurrentPos - (intakeRightSim.getAngularVelocityRPM() * 0.04));
-
-        } else {
-           
-            SmartDashboard.putNumber("left intake motor applied output", intakeLeft.getAppliedOutput());
-            SmartDashboard.putNumber("right intake motor applied output", intakeRight.getAppliedOutput());
-
-        }
+        }          
     }
 }

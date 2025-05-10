@@ -22,28 +22,19 @@ public class Robot extends TimedRobot {
 
   public Robot() {
     CanBridge.runTCP();
-    //CameraServer.startAutomaticCapture();
   }
 
   @Override
   public void robotInit() {
-   // robotContainer.cameraFeedInit();
-  //  if(Utils.isSimulation() || Utils.isReplay()){
-  //  robotContainer.vizSimInit();}
-  // //  robotContainer.updateVizSim();
   }
-
-
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
     robotContainer.updatePose();
-    robotContainer.updateDriveSensors();
-    if(Utils.isSimulation()){
-   // robotContainer.updateVizSim();
-    robotContainer.updateVisionPose();
-  }
+    if (Utils.isSimulation()) {
+      robotContainer.updateVisionPose();
+    }
   }
 
   @Override
@@ -80,9 +71,11 @@ public class Robot extends TimedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
-    autonomousCommand = robotContainer.getAutonomousCommand();
-    if (autonomousCommand != null) {
-      autonomousCommand.schedule();
+    if (Utils.isSimulation()) {
+      autonomousCommand = robotContainer.getAutonomousCommand();
+      if (autonomousCommand != null) {
+        autonomousCommand.schedule();
+      }
     }
   }
 

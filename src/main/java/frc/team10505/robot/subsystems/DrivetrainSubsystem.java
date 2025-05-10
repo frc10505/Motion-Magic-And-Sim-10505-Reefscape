@@ -14,6 +14,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.revrobotics.spark.SparkSim;
 
 import au.grapplerobotics.LaserCan;
 import edu.wpi.first.math.Matrix;
@@ -26,7 +27,12 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -39,14 +45,14 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.team10505.robot.Vision;
 import frc.team10505.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
-import static frc.team10505.robot.subsystems.HardwareConstants.*;
-import static frc.team10505.robot.Constants.DrivetrainConstants.*;
+import static frc.team10505.robot.Constants.HardwareConstants.*;
+import static frc.team10505.robot.Constants.*;
 
 public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsystem {
-    private SwerveRequest.ApplyRobotSpeeds robotDrive = new SwerveRequest.ApplyRobotSpeeds();
+    private SwerveRequest.ApplyRobotSpeeds autoRobotDrive = new SwerveRequest.ApplyRobotSpeeds();
 
-private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCentric()
-                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCentric()
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
     private CommandJoystick joystick;
     private Vision vision;
 
@@ -54,6 +60,19 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
     private final LaserCan leftLaser = new LaserCan(DRIVETRAIN_LEFT_LASER_ID);
 
     public final Spark blinkyLight = new Spark(DRIVETRAIN_BLINKY_LIGHT_CHANNEL);
+
+    //Sim vars to simulate the color changes of the LEDs
+    private final Mechanism2d mech = new Mechanism2d(1, 1);
+    private final MechanismRoot2d ledRoot = mech.getRoot("ledRoot", 0.1, 0.1);
+    private final MechanismLigament2d ledViz = ledRoot.append(new MechanismLigament2d("LED Viz", 0.8, 0, 80, new Color8Bit(Color.kBlack)));
+
+    private final Color8Bit red = new Color8Bit(Color.kRed);
+    private final Color8Bit blue = new Color8Bit(Color.kLightBlue);
+    private final Color8Bit green = new Color8Bit(Color.kGreen);
+    private final Color8Bit black = new Color8Bit(Color.kBlack);
+
+    private boolean blueOn = true;
+    private boolean redOn = true;
 
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
@@ -94,6 +113,7 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
      * SysId routine for characterizing steer. This is used to find PID gains for
      * the steer motors.
      */
+    @SuppressWarnings("unused")
     private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
             new SysIdRoutine.Config(
                     null, // Use default ramp rate (1 V/s)
@@ -113,6 +133,7 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
      * See the documentation of SwerveRequest.SysIdSwerveRotation for info on
      * importing the log to SysId.
      */
+    @SuppressWarnings("unused")
     private final SysIdRoutine m_sysIdRoutineRotation = new SysIdRoutine(
             new SysIdRoutine.Config(
                     /* This is in radians per second², but SysId only supports "volts per second" */
@@ -144,6 +165,7 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
         this.vision = vision;
         if (Utils.isSimulation() || Utils.isReplay()) {
             startSimThread();
+            SmartDashboard.putData("LED Viz", mech);
         }
     }
 
@@ -156,6 +178,7 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
         this.vision = vision;
         if (Utils.isSimulation() || Utils.isReplay()) {
             startSimThread();
+            SmartDashboard.putData("LED Viz", mech);
         }
     }
 
@@ -171,9 +194,11 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
         this.vision = vision;
         if (Utils.isSimulation() || Utils.isReplay()) {
             startSimThread();
+            SmartDashboard.putData("LED Viz", mech);
         }
     }
 
+    //*Sim constructor */
     public DrivetrainSubsystem(
             Vision vision,
             CommandJoystick joystick,
@@ -183,10 +208,12 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
         this.vision = vision;
         if (Utils.isSimulation() || Utils.isReplay()) {
             this.joystick = joystick;
+            SmartDashboard.putData("LED Viz", mech);
             startSimThread();
         }
     }
 
+    //*Sim constructor */
     public DrivetrainSubsystem(
             Vision vision,
             CommandJoystick joystick,
@@ -195,12 +222,14 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
             SwerveModuleConstants<?, ?, ?>... modules) {
         super(drivetrainConstants, odometryUpdateFrequency, modules);
         this.vision = vision;
+        SmartDashboard.putData("LED Viz", mech);
         if (Utils.isSimulation() || Utils.isReplay()) {
             this.joystick = joystick;
             startSimThread();
         }
     }
 
+    //*Sim constructor */
     public DrivetrainSubsystem(
             Vision vision,
             CommandJoystick joystick,
@@ -214,10 +243,10 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
         this.vision = vision;
         if (Utils.isSimulation() || Utils.isReplay()) {
             this.joystick = joystick;
+            SmartDashboard.putData("LED Viz", mech);
             startSimThread();
         }
     }
-
 
     /**
      * Returns a command that applies the specified control request to this swerve
@@ -233,64 +262,70 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
 
     /** FOR THE LOVE OF EVEYTHING GOOD, ONLY USE IN AUTONS */
     public Command autoStop() {
-        return runOnce(() -> this.setControl(robotDrive.withSpeeds(new ChassisSpeeds(0.0, 0.0, 0.0))));
+        return runOnce(() -> this.setControl(autoRobotDrive.withSpeeds(new ChassisSpeeds(0.0, 0.0, 0.0))));
     }
 
-    // public Command setRobotSpeeds(double xSpeed, double ySpeed, double rotSpeed) {
-    //     return runOnce(() -> this.setControl(robotDrive.withSpeeds(new ChassisSpeeds(xSpeed, ySpeed, rotSpeed))));
+    // // public Command setRobotSpeeds(double xSpeed, double ySpeed, double
+    // rotSpeed) {
+    // // return runOnce(() -> this.setControl(robotDrive.withSpeeds(new
+    // ChassisSpeeds(xSpeed, ySpeed, rotSpeed))));
+    // // }
+    // private double skewInit = 0;
+    // private double yawInit = 0;
+
+    // public Command bruhPt1(){
+    // return runOnce(()->
+    // {
+    // if(vision.getTargetSkew(vision.backCamSim) > 10.0
+    // ||vision.getTargetSkew(vision.backCamSim) ==0){
+    // skewInit = 10.0;
+    // }else{
+    // skewInit = Math.abs(vision.getTargetSkew(vision.backCamSim));
     // }
-    private double skewInit = 0;
-    private double yawInit = 0;
 
-    public Command bruhPt1(){
-        return runOnce(()->
-        {
-            if(vision.getTargetSkew(vision.backCamSim) > 10.0 ||vision.getTargetSkew(vision.backCamSim) ==0){
-                skewInit = 10.0;
-            }else{
-                skewInit = Math.abs(vision.getTargetSkew(vision.backCamSim));
-            }
+    // if(vision.getTargetYaw(vision.backCamSim) > 10.0 ||
+    // vision.getTargetYaw(vision.backCamSim) == 0){
+    // yawInit = 10.0;
+    // }else{
+    // yawInit = Math.abs(vision.getTargetYaw(vision.backCamSim));
+    // }
+    // yaw = 0;
+    // skew = 0;
+    // });
+    // }
 
-            if(vision.getTargetYaw(vision.backCamSim) > 10.0 || vision.getTargetYaw(vision.backCamSim) == 0){
-                yawInit = 10.0;
-            }else{
-                yawInit = Math.abs(vision.getTargetYaw(vision.backCamSim));
-            }
-            yaw = 0;
-            skew = 0;
-        });
-    }
+    // private Command bruhPrt2(){
+    // return run(() ->{
+    // for (double y = yawInit+skewInit; y>0; --y){
+    // yaw = yawInit + y;
+    // skew = skewInit + y;
+    // if(yaw<0){
+    // yaw = 0;
+    // }
+    // if(skew<0){
+    // skew = 0;
+    // }
 
-    private Command bruhPrt2(){
-        return run(() ->{         
-             for (double y = yawInit+skewInit; y>0; --y){
-            yaw = yawInit + y;
-            skew = skewInit + y;
-            if(yaw<0){
-                yaw = 0;
-            }
-            if(skew<0){
-                skew = 0;
-            }
-            
-            applyRequest(() -> robotCentricDrive.withVelocityY(yaw * 10+ joystick.getRawAxis(1)).withVelocityX(skew * 10 + joystick.getRawAxis(2)).withRotationalRate(joystick.getRawAxis(3)));
-            waitSeconds(0.5);
-        }});
-    }
+    // applyRequest(() -> robotCentricDrive.withVelocityY(yaw * 10+
+    // joystick.getRawAxis(1)).withVelocityX(skew * 10 +
+    // joystick.getRawAxis(2)).withRotationalRate(joystick.getRawAxis(3)));
+    // waitSeconds(0.5);
+    // }});
+    // }
 
-    private double yaw = 0.0;
-    private double skew = 0.0;
+    // private double yaw = 0.0;
+    // private double skew = 0.0;
 
-    public boolean finished = false;
+    // public boolean finished = false;
 
-    public Command goToLeftStation() {
-      
-        return Commands.sequence(
-            bruhPt1(),
-            bruhPrt2()    
+    // public Command goToLeftStation() {
 
-        );
-    }
+    // return Commands.sequence(
+    // bruhPt1(),
+    // bruhPrt2()
+
+    // );
+    // }
 
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine
@@ -440,37 +475,60 @@ private SwerveRequest.RobotCentric robotCentricDrive = new SwerveRequest.RobotCe
 
         }
 
+        SmartDashboard.putBoolean("left drive sensor", seesLeftSensor());
+        SmartDashboard.putBoolean("right drive sensor", seesRightSensor());
 
+        if (Utils.isSimulation()) {
+            if (seesLeftSensorClose() && seesRightSensorClose()) {
+                if(blueOn){
+                    blueOn = false;
+                    ledViz.setColor(black);
+                }else{
+                    blueOn = true;
+                    ledViz.setColor(blue);
+                }
+            } else if (seesLeftSensor() && seesRightSensor()) {
+                if(redOn){
+                    redOn = false;
+                    ledViz.setColor(black);
+                }else{
+                    redOn = true;
+                    ledViz.setColor(red);
+                }
+            } else if (!seesLeftSensor() && !seesRightSensor()) {
+                ledViz.setColor(red);
+            } else if (seesLeftSensor() | seesRightSensor()) {
+                ledViz.setColor(green);
+            }
+        } else {
+            if (seesLeftSensorClose() && seesRightSensorClose()) {
+                blinkyLight.set(0.35);// flashy color 2(blue)
+            } else if (seesLeftSensor() && seesRightSensor()) {
+                blinkyLight.set(-0.11);// strobe red
+            } else if (!seesLeftSensor() && !seesRightSensor()) {
+                blinkyLight.set(0.61);// red
+            } else if (seesLeftSensor() | seesRightSensor()) {
+                blinkyLight.set(0.77);// green
+            }
 
-        // if (seesLeftSensorClose() && seesRightSensorClose() ) {
-        // blinkyLight.set(0.35);//flashy color 2(blue)
-        // } else if (seesLeftSensor() && seesRightSensor()) {
-        // blinkyLight.set(-0.11);//strobe red
-        // } else if (!seesLeftSensor() && !seesRightSensor()) {
-        // blinkyLight.set(0.61);//red
-        // } else if (seesLeftSensor() | seesRightSensor()) {
-        // blinkyLight.set(0.77);//green
-        // }
-
-        SmartDashboard.putNumber("skew", skew);
-        SmartDashboard.putNumber("skewinit", skewInit);
-        SmartDashboard.putNumber("yaw", yaw);
-        SmartDashboard.putNumber("yawinit", yawInit);
-
-
-
-
-        try {
-            SmartDashboard.putNumber("left Laser Distance", leftLaser.getMeasurement().distance_mm);
-        } catch (NullPointerException r) {
-            // DriverStation.reportError("left sensor is null", r.getStackTrace());
+            try {
+                SmartDashboard.putNumber("left Laser Distance", leftLaser.getMeasurement().distance_mm);
+            } catch (NullPointerException r) {
+                DriverStation.reportError("left sensor is null", r.getStackTrace());
+            }
+    
+            try {
+                SmartDashboard.putNumber("right Laser Distance", rightLaser.getMeasurement().distance_mm);
+            } catch (NullPointerException r) {
+                DriverStation.reportError("right sensor is null", r.getStackTrace());
+            }
         }
+        // SmartDashboard.putNumber("skew", skew);
+        // SmartDashboard.putNumber("skewinit", skewInit);
+        // SmartDashboard.putNumber("yaw", yaw);
+        // SmartDashboard.putNumber("yawinit", yawInit);
 
-        try {
-            SmartDashboard.putNumber("right Laser Distance", rightLaser.getMeasurement().distance_mm);
-        } catch (NullPointerException r) {
-            // DriverStation.reportError("right sensor is null", r.getStackTrace());
-        }
+        
     }
 
     private void startSimThread() {
