@@ -6,6 +6,8 @@
 
 package frc.team10505.robot;
 
+import edu.wpi.first.hal.ThreadsJNI;
+import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -17,8 +19,9 @@ import au.grapplerobotics.CanBridge;
 public class Robot extends TimedRobot {
 
   private final RobotContainer robotContainer = new RobotContainer();
-
   private Command autonomousCommand;
+
+  private Thread visionThread = new Thread(() -> robotContainer.updateVisionPose());
 
   public Robot() {
     CanBridge.runTCP();
@@ -26,15 +29,25 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
+    //visionThread.setDaemon(true);
+    //visionThread.start();
+
   }
 
   @Override
   public void robotPeriodic() {
+   Threads.setCurrentThreadPriority(true, 99);
+    //visionThread.setPriority(Thread.MIN_PRIORITY);
     CommandScheduler.getInstance().run();
-    robotContainer.updatePose();
+
+   //visionThread.run();
+
+    //robotContainer.updatePose();
     if (Utils.isSimulation()) {
       robotContainer.updateVisionPose();
     }
+
+   Threads.setCurrentThreadPriority(false, 10);
   }
 
   @Override

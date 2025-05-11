@@ -13,7 +13,9 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -60,6 +62,7 @@ public class RobotContainer {
         private final CoralSubsystem coralSubsys;
         private final DrivetrainSubsystem drivetrainSubsys;
         private final Vision vision = new Vision();
+        private Simulation simulation;
 
         /* Superstructure */
         private final Superstructure superStructure;
@@ -77,6 +80,7 @@ public class RobotContainer {
 
                         drivetrainSubsys = TunerConstants.createDrivetrain(joystick, vision);
                         coralSubsys = new CoralSubsystem(joystick);
+                        simulation  = new Simulation(algaeSubsys, coralSubsys, elevatorSubsys);
 
                         vision.reset();
                 } else {
@@ -173,21 +177,20 @@ public class RobotContainer {
 
                 if (Utils.isSimulation() || Utils.isReplay()) {
                         //joystick.button(1).onTrue(superStructure.seekLeftIntakeStation());
-                        joystick.button(1).onTrue(elevatorSubsys.setHeight(0));// coralSubsys.slowEndIntake());//
-                        joystick.button(2).onTrue(elevatorSubsys.setHeight(0.15));// coralSubsys.trough().until (()
-                                                                                  // ->!coralSubsys.outSensor()));
+                        joystick.button(1).onTrue(elevatorSubsys.setHeight(0));
+                        joystick.button(2).onTrue(elevatorSubsys.setHeight(0.15));
                         joystick.button(3).onTrue(elevatorSubsys.setHeight(0.3));
                         joystick.button(4).onTrue(elevatorSubsys.setHeight(0.5));
 
-                        // joystick.button(1).onTrue(algaeSubsys.setAngle(PIVOT_DOWN));
-                        // joystick.button(2).onTrue(algaeSubsys.setAngle(-30));
-                        // joystick.button(3).onTrue(algaeSubsys.setAngle(PIVOT_OUT));
-                        // joystick.button(4).onTrue(algaeSubsys.setAngle(PIVOT_UP));
+                        joystick2.button(1).whileTrue(superStructure.intakeCoral());
+                        joystick2.button(3).whileTrue(coralSubsys.runIntake(-CORAL_INTAKE_SPEED));
+                        joystick2.button(4).whileTrue(coralSubsys.runIntake(CORAL_OUTTAKE_SPEED));
 
-                        joystick2.button(2).onTrue(resetPose());
-                        joystick2.button(3).whileTrue(coralSubsys.runIntake(-1));
-                        joystick2.button(4).whileTrue(coralSubsys.runIntake(3));
-                        joystick2.button(1).whileTrue(coralSubsys.runIntake(5));
+                        joystick3.button(1).onTrue(algaeSubsys.setAngle(ALGAE_PIVOT_DOWN));
+                        joystick3.button(2).onTrue(algaeSubsys.setAngle(ALGAE_PIVOT_OUT));
+                        joystick3.button(3).onTrue(algaeSubsys.setAngle(ALGAE_PIVOT_UP));
+                        joystick3.button(4).whileTrue(algaeSubsys.setIntake(ALGAE_INTAKE_NORMAL_SPEED)).onFalse(algaeSubsys.stopIntake());
+
 
                 } else {
 
@@ -321,35 +324,27 @@ public class RobotContainer {
 
         }
 
-        // private VisionSystemSim vizSim = new VisionSystemSim("Reefscape Sim");
-
-        // public void vizSimInit() {
-        // vizSim.addAprilTags(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded));
-        // }
-
-        // public void updateVizSim() {
-        // vizSim.update(drivetrainSubsys.getState().Pose);
-        // vizSim.getDebugField();
-        // }
-
         public void updateVisionPose() {
-
+                vision.updateDashboard();
+                updatePose();
                 vision.updateViz(drivetrainSubsys.getState().Pose);
-
                 // if the camera has a tag in sight, it will calculate a pose and add to the
                 // drivetrain
 
+               
+                
+                             
                 try {
 
-                        var visionEst = vision.simGetReefCamEstimatedPose();
-                        visionEst.ifPresent(est -> {
+                       
+                        vision.simGetReefCamEstimatedPose().ifPresent(est -> {
                                 drivetrainSubsys.addVisionMeasurement(est.estimatedPose.toPose2d(),
                                                 est.timestampSeconds);
                                 SmartDashboard.putNumber("sim reef cam pose x", est.estimatedPose.toPose2d().getX());
                                 SmartDashboard.putNumber("sim reef cam pose y", est.estimatedPose.toPose2d().getY());
                                 SmartDashboard.putNumber("sim reef cam pose rot",
                                                 est.estimatedPose.toPose2d().getRotation().getDegrees());
-                        });
+                });
 
                 } catch (Exception e) {
                         Commands.print("reef cam pose failed");

@@ -9,20 +9,28 @@ import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 
+import com.ctre.phoenix6.swerve.SimSwerveDrivetrain;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.vision.VisionThread;
+import edu.wpi.first.wpilibj.IterativeRobotBase;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.Optional;
 
-public class Vision extends SubsystemBase{
+public class Vision extends SubsystemBase{//TimedRobot {
+
 /*Cameras */
 private final PhotonCamera reefCam = new PhotonCamera("reefCam");
 private final PhotonCamera backCam = new PhotonCamera("backCam");
@@ -55,6 +63,7 @@ public final PhotonCameraSim backCamSim = new PhotonCameraSim(backCam, cameraPro
 
 
 public Vision() {
+
      //cameraProperties.setCalibration(640, 480, Rotation2d.fromDegrees(100));
      cameraProperties.setCalibError(0.25, 0.08);
      cameraProperties.setFPS(20);
@@ -151,12 +160,10 @@ public Transform3d getTargetTransformation(PhotonCameraSim camera){
 //         return backCamRobotPose;
 //     }
 
-
-
-
-
 public void updateViz(Pose2d pose){
+    visionSim.getDebugField();
     visionSim.update(pose);
+
 }
 
 public void reset() {
@@ -165,8 +172,9 @@ public void reset() {
 }
 
 
-@Override
-public void periodic(){
+
+//@Override
+public void updateDashboard(){
 
 
 getReefCamEstimatedPose().ifPresent(est -> {
@@ -190,8 +198,6 @@ getReefCamEstimatedPose().ifPresent(est -> {
     SmartDashboard.putNumber("back cam target rotation y", getTargetTransformation(backCamSim).getRotation().getY());
     SmartDashboard.putNumber("back cam target rotation z", getTargetTransformation(backCamSim).getRotation().getZ());
     SmartDashboard.putNumber("back cam target ID", backCamSim.getCamera().getLatestResult().getBestTarget().fiducialId);
-
-
 
 });
 

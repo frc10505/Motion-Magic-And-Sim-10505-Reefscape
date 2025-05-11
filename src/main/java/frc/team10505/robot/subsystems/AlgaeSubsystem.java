@@ -9,18 +9,12 @@ package frc.team10505.robot.subsystems;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
-import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import com.ctre.phoenix6.Utils;
 import com.revrobotics.spark.*;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -48,32 +42,19 @@ public class AlgaeSubsystem extends SubsystemBase {
     private final PIDController pivotController;
     private final ArmFeedforward pivotFeedforward;
 
-    private double pivotSetpoint = ALGAE_PIVOT_DOWN;
+    public final double startingAngle = ALGAE_PIVOT_DOWN;
+    private double pivotSetpoint = startingAngle;
     public boolean coasting = false;
-    private double intakeSpeed = 0;// ONLY USED FOR LOGGING AND SIM
-
-    /* Sim Variables */
-    private final double simStartingAngle = pivotSetpoint;
-
-    // Variables to create a visualization
-    private final Mechanism2d algaeMech = new Mechanism2d(1.5, 1.5);
-    private final MechanismRoot2d pivotRoot = algaeMech.getRoot("pivotRoot", 0.75, 0.75);
-    private final MechanismLigament2d pivotViz = pivotRoot
-            .append(new MechanismLigament2d("pivotViz", 0.56, simStartingAngle));
-
-    private final MechanismRoot2d intakeRoot = algaeMech.getRoot("intakeRoot", 1.31, 0.75);
-    private final MechanismLigament2d intakeViz = intakeRoot
-            .append(new MechanismLigament2d("intakeViz", 0.07, simStartingAngle, 10, new Color8Bit(Color.kTomato)));
+    public double intakeSpeed = 0;// ONLY USED FOR LOGGING AND SIM
 
     // simulation of the PHYSICS of the mechanisms (this is what does the
     // calculations/makes the sim useful & cool)
     private final SingleJointedArmSim pivotSim = new SingleJointedArmSim(DCMotor.getNEO(1), 80,
             SingleJointedArmSim.estimateMOI(0.305, 2), 0.305, Units.degreesToRadians(-120), Units.degreesToRadians(120),
-            true, Units.degreesToRadians(simStartingAngle));
+            true, Units.degreesToRadians(startingAngle));
 
-    private final FlywheelSim intakeSim = new FlywheelSim(
-            LinearSystemId.createFlywheelSystem(DCMotor.getNEO(1), 0.01, 5), DCMotor.getNEO(1));
-
+    public double simPivotEncoder = startingAngle;
+    
     /* Our constructor */
     public AlgaeSubsystem() {
         if (Utils.isSimulation() || Utils.isReplay()) {
@@ -95,16 +76,14 @@ public class AlgaeSubsystem extends SubsystemBase {
         intakeMotorConfig.idleMode(IdleMode.kBrake);
         intakeMotorConfig.smartCurrentLimit(ALGAE_INTAKE_MOTOR_CURRENT_LIMIT, ALGAE_INTAKE_MOTOR_CURRENT_LIMIT);
         intakeMotor.configure(intakeMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-        // Sim visualization
-        SmartDashboard.putData("Algae Subsys Viz", algaeMech);
     }
 
     /* Methods */
     // calculations
+    /**returns the pivot's position in degrees */
     public double getPivotEncoder() {
         if (Utils.isSimulation() || Utils.isReplay()) {
-            return pivotViz.getAngle();
+            return simPivotEncoder;
         } else {
             return (-pivotEncoder.getPosition() + absoluteOffset);
         }
@@ -149,7 +128,10 @@ public class AlgaeSubsystem extends SubsystemBase {
         });
     }
 
-    /** Undoes the coastPivot command. Sets the pivot idle mode to brake and "enables" PID */
+    /**
+     * Undoes the coastPivot command. Sets the pivot idle mode to brake and
+     * "enables" PID
+     */
     public Command brakePivot() {
         return run(() -> {
             pivotMotorConfig.idleMode(IdleMode.kBrake);
@@ -159,7 +141,10 @@ public class AlgaeSubsystem extends SubsystemBase {
     }
 
     /* intake commands to reference */
-    /** runOnce command that sets the intake motor to a speed of the inputted parameter */
+    /**
+     * runOnce command that sets the intake motor to a speed of the inputted
+     * parameter
+     */
     public Command setIntake(double speed) {
         return runOnce(() -> {
             intakeMotor.set(speed);
@@ -174,45 +159,31 @@ public class AlgaeSubsystem extends SubsystemBase {
             intakeSpeed = 0;
         });
     }
-    
+
+    @Override
+    public void simulationPeriodic(){
+        if (!coasting) {
+             pivotSim.setInput(getEffort());
+        }
+        pivotSim.update(0.001);
+        simPivotEncoder = Units.radiansToDegrees(pivotSim.getAngleRads());
+    }
+
     @Override
     public void periodic() {
-        //Stuff that happens IRL, in sim, replays etc
         // dashboard stuff
         SmartDashboard.putNumber("Pivot Setpoint", pivotSetpoint);
         SmartDashboard.putNumber("Pivot Encoder", getPivotEncoder());
         SmartDashboard.putNumber("Pivot Calculated Effort", getEffort());
-        SmartDashboard.putNumber("Pivot Motor Output", pivotMotor.getAppliedOutput());
         SmartDashboard.putNumber("Algae Intake Speed", intakeSpeed);
-        SmartDashboard.putNumber("Algae Intake Motor Output", intakeMotor.getAppliedOutput());
 
-        // Sim updating stuff
-        if (Utils.isSimulation() || Utils.isReplay()) {
-            if (Utils.isSimulation()) {
-                SmartDashboard.putNumber("Sim Algae Pivot Viz Angle", pivotViz.getAngle());
-                SmartDashboard.putNumber("Sim Algae Intake Viz Angle", intakeViz.getAngle());
-                if(!coasting) {
-                    pivotSim.setInput(getEffort());
-                }
-                intakeSim.setInput(intakeSpeed);
-            } else if (Utils.isReplay()) {
-                // TODO figure out how to enter inputs from replay
-            }
-
-            pivotSim.update(0.01);
-            pivotViz.setAngle(Units.radiansToDegrees(pivotSim.getAngleRads()));
-
-            intakeSim.update(0.01);
-            intakeViz.setAngle(intakeViz.getAngle() + (intakeSpeed * 0.05));
-            // woah so cool. uses trigonometry so the intake wheel can follow the pivot on the sim viz
-            intakeRoot.setPosition((Math.cos(Units.degreesToRadians(pivotViz.getAngle())) * 0.56) + 0.75,
-                    (Math.sin(Units.degreesToRadians(pivotViz.getAngle())) * 0.56) + 0.75);
-
-        } else {
-            //IRL stuff
+        if(!Utils.isSimulation()){
             if (!coasting) {
                 pivotMotor.setVoltage(getEffort());
             }
+            SmartDashboard.putNumber("Pivot Motor Output", pivotMotor.getAppliedOutput());
+            SmartDashboard.putNumber("Algae Intake Motor Output", intakeMotor.getAppliedOutput());    
         }
+        
     }
 }
