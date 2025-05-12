@@ -6,6 +6,11 @@
 
 package frc.team10505.robot;
 
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
+
 public final class Constants {
   /**All constants that have to do with hardware & hardware configurations */
   public final class HardwareConstants{
@@ -49,8 +54,23 @@ public final class Constants {
     public final static double ALGAE_PIVOT_GEARSTACK = 80;
   }
 
-  public class VisionConstants{
+  public class VisionConstants{    
     public final static String FRONT_CAM_NAME = "Front Cam";
+    public final static int FRONT_CAM_WIDTH_RES = 4656;
+    public final static int FRONT_CAM_HEIGHT_RES = 3496;
+    public final static double FRONT_CAM_FOV_DEG = 90;
+    public final static Transform3d FRONT_CAM_TO_ROBOT = new Transform3d(
+            new Translation3d(-1.0, 1.0, 0.0),
+            new Rotation3d(0.0, 0.0, Units.degreesToRadians(180.0)));
+    
+    public final static String BACK_CAM_NAME = "Back Cam";
+    public final static int BACK_CAM_WIDTH_RES = 4656;
+    public final static int BACK_CAM_HEIGHT_RES = 3496;
+    public final static double BACK_CAM_FOV_DEG = 90;
+    public final static Transform3d BACK_CAM_TO_ROBOT= new Transform3d(
+      new Translation3d(0.38, -0.35, 0.178),
+      new Rotation3d(0.0, Units.degreesToRadians(15.0), Units.degreesToRadians(0.0)));
+    
   }  
 
 

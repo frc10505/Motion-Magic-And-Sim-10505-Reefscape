@@ -32,9 +32,10 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
    Threads.setCurrentThreadPriority(true, 99);
     CommandScheduler.getInstance().run();
+    robotContainer.updatePoseValues();
 
     if (Utils.isSimulation()) {
-      robotContainer.updateVisPose();
+      robotContainer.updateVision();
       robotContainer.updateBatterySim();
     }
 

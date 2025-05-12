@@ -16,7 +16,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -81,7 +80,7 @@ public class RobotContainer {
 
                         drivetrainSubsys = TunerConstants.createDrivetrain(joystick, vision);
                         coralSubsys = new CoralSubsystem(joystick);
-                        simulation  = new Simulation(algaeSubsys, coralSubsys, elevatorSubsys);
+                        simulation = new Simulation(algaeSubsys, coralSubsys, elevatorSubsys);
 
                         vision.reset();
                 } else {
@@ -157,9 +156,7 @@ public class RobotContainer {
                                                         0.8 * MaxSpeed) // Drive left with negative X (left)
                                         .withRotationalRate(xboxController2.getLeftY() * 3.2 * MaxAngularRate))); // 2.5
 
-                }
-
-                else {
+                } else {
                         drivetrainSubsys.setDefaultCommand(drivetrainSubsys.applyRequest(() -> drive
                                         .withVelocityX(-xboxController.getLeftY() * polarityChooser.getSelected()
                                                         * 0.8 * MaxSpeed) // Drive
@@ -177,7 +174,7 @@ public class RobotContainer {
         private void configButtonBindings() {
 
                 if (Utils.isSimulation() || Utils.isReplay()) {
-                        //joystick.button(1).onTrue(superStructure.seekLeftIntakeStation());
+                        // joystick.button(1).onTrue(superStructure.seekLeftIntakeStation());
                         joystick.button(1).onTrue(elevatorSubsys.setHeight(0));
                         joystick.button(2).onTrue(elevatorSubsys.setHeight(0.15));
                         joystick.button(3).onTrue(elevatorSubsys.setHeight(0.3));
@@ -190,12 +187,12 @@ public class RobotContainer {
                         joystick3.button(1).onTrue(algaeSubsys.setAngle(ALGAE_PIVOT_DOWN));
                         joystick3.button(2).onTrue(algaeSubsys.setAngle(ALGAE_PIVOT_OUT));
                         joystick3.button(3).onTrue(algaeSubsys.setAngle(ALGAE_PIVOT_UP));
-                        joystick3.button(4).whileTrue(algaeSubsys.setIntake(ALGAE_INTAKE_NORMAL_SPEED)).onFalse(algaeSubsys.stopIntake());
-
+                        joystick3.button(4).whileTrue(algaeSubsys.setIntake(ALGAE_INTAKE_NORMAL_SPEED))
+                                        .onFalse(algaeSubsys.stopIntake());
 
                 } else {
 
-                        //TODO check w comp code
+                        // TODO check w comp code
                         // bindings for the xbox controller
                         xboxController.leftBumper().onTrue(algaeSubsys.setIntake(-ALGAE_INTAKE_NORMAL_SPEED))
                                         .onFalse(algaeSubsys.stopIntake());
@@ -313,53 +310,34 @@ public class RobotContainer {
                 return svsuAutoChooser.getSelected();// autoChooser.getSelected();
         }
 
-        // called periodically in robot.java, updates all our pose estimation stuff
-        public void updatePose() {
-                // puts the drivetrain pose on our dashboards
+        /**Puts the estimated robot pose to smartdashboard(x, y, rot and gyro rot) */
+        public void updatePoseValues() {
                 SmartDashboard.putNumber("estimated drive pose x", drivetrainSubsys.getState().Pose.getX());
                 SmartDashboard.putNumber("estimated drive pose y", drivetrainSubsys.getState().Pose.getY());
                 SmartDashboard.putNumber("estimated drive pose rotation",
                                 drivetrainSubsys.getState().Pose.getRotation().getDegrees());
                 SmartDashboard.putNumber("Gyro rot",
                                 drivetrainSubsys.getPigeon2().getRotation2d().getDegrees());
-
         }
 
-        public void updateVisPose(){
- //updateViz(latestVisionPose);
-                //vision.updateDashboard();
-                //updatePose();
-                //vision.updateViz(drivetrainSubsys.getState().Pose);
-                // if the camera has a tag in sight, it will calculate a pose and add to the
-                // drivetrain
+        /**adds vision measurements to the drivetrain, updates the field viz and updates dashboard values from the cams */
+        public void updateVision() {
+                try {
+                        vision.frontCamera.getEstimatedPose().ifPresent(est -> {
+                                drivetrainSubsys.addVisionMeasurement(est.estimatedPose.toPose2d(),
+                                                est.timestampSeconds);
+                        });
 
-            //    try{
-            //     simGetReefCamEstimatedPose();
-            //    }      
-                
-            try {       
-                vision.simGetReefCamEstimatedPose().ifPresent(est -> {
-                        drivetrainSubsys.addVisionMeasurement(est.estimatedPose.toPose2d(),
-                                        est.timestampSeconds);
-                        SmartDashboard.putNumber("sim reef cam pose x", est.estimatedPose.toPose2d().getX());
-                        SmartDashboard.putNumber("sim reef cam pose y", est.estimatedPose.toPose2d().getY());
-                        SmartDashboard.putNumber("sim reef cam pose rot",
-                                        est.estimatedPose.toPose2d().getRotation().getDegrees());
-        });
-
-        } catch (Exception e) {
-                Commands.print("reef cam pose failed");
-        }                vision.updateViz(drivetrainSubsys.getState().Pose);
+                } catch (Exception e) {
+                        SmartDashboard.putString("Failures", "Front cam pose estimator failed");
+                }
+                vision.updateViz(drivetrainSubsys.getState().Pose);
+                vision.updateDashboard();
         }
 
-
-
-        public void updateBatterySim(){
+        public void updateBatterySim() {
                 RoboRioSim.setVInCurrent(BatterySim.calculateDefaultBatteryLoadedVoltage(
-                        simulation.getMechanismCurrentDrawAms()));
-
-
+                                simulation.getMechanismCurrentDrawAms()));
         }
-       
 
 }

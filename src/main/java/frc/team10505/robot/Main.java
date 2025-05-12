@@ -6,9 +6,7 @@
 
 package frc.team10505.robot;
 
-import edu.wpi.first.wpilibj.IterativeRobotBase;
 import edu.wpi.first.wpilibj.RobotBase;
-//import frc.team10505.robot.Vision.VisThread;
 
 public final class Main {
 
@@ -17,7 +15,6 @@ public final class Main {
 
   public static void main(String... args) {
     RobotBase.startRobot(Robot::new);
-    //IterativeRobotBase.startRobot(VisThread::new);
   }
 
 }
