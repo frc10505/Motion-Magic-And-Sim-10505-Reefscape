@@ -9,7 +9,9 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -19,6 +21,7 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team10505.robot.subsystems.AlgaeSubsystem;
 import frc.team10505.robot.subsystems.CoralSubsystem;
+import frc.team10505.robot.subsystems.DrivetrainSubsystem;
 import frc.team10505.robot.subsystems.ElevatorSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -84,7 +87,7 @@ public class Simulation extends SubsystemBase {
     public Simulation(AlgaeSubsystem algaeSubsystem, CoralSubsystem coralSubsystem, ElevatorSubsystem elevatorSubsystem){
         this.algaeSubsys = algaeSubsystem;
         this.coralSubsys = coralSubsystem;
-        this.elevSubsys = elevatorSubsystem; 
+        this.elevSubsys = elevatorSubsystem;
 
         elevViz = elevRoot.append(new MechanismLigament2d("elevatorLigament", 0, 90, 70.0,
                 new Color8Bit(Color.kBlanchedAlmond)));
@@ -94,11 +97,24 @@ public class Simulation extends SubsystemBase {
         SmartDashboard.putData("elevSimMech", elevMech);
         SmartDashboard.putData("coralIntake", coralIntakeMech);
         SmartDashboard.putData("Algae Subsys Viz", algaeMech);
+
+        
     }
 
+    public double getMechanismCurrentDrawAms(){
+        return algaeSubsys.pivotSim.getCurrentDrawAmps() 
+        + intakeSim.getCurrentDrawAmps() 
+        + intakeLeftSim.getCurrentDrawAmps() 
+        + intakeRightSim.getCurrentDrawAmps() 
+        + elevSubsys.elevSim.getCurrentDrawAmps();
+       
+    }
 
     @Override
     public void simulationPeriodic(){
+ 
+
+
         SmartDashboard.putNumber("Sim Algae Pivot Viz Angle", pivotViz.getAngle());
         SmartDashboard.putNumber("Sim Algae Intake Viz Angle", intakeViz.getAngle());
         SmartDashboard.putNumber("Sim left intake viz angle", leftIntakeViz.getAngle());

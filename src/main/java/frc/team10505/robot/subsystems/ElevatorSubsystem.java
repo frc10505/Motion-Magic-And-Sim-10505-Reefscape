@@ -42,7 +42,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     // simulation of the PHYSICS of the mechanisms (this is what does the
     // calculations/makes the sim useful & cool)
-    private final ElevatorSim elevSim = new ElevatorSim(DCMotor.getKrakenX60(2), 12, 10, 0.05, 0.0, 3.0, true,
+    public final ElevatorSim elevSim = new ElevatorSim(DCMotor.getKrakenX60(2), 12, 10, 0.05, 0.0, 3.0, true,
             startingHeight);
     public double simElevEncoder = startingHeight;
 

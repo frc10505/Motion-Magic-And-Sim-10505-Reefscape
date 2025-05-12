@@ -6,8 +6,11 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.sim.Pigeon2SimState;
+import com.ctre.phoenix6.swerve.SimSwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.jni.SwerveJNI.ModuleState;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -26,6 +29,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -35,9 +39,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-
-import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -72,6 +73,9 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
 
     private boolean blueOn = true;
     private boolean redOn = true;
+
+    private Pigeon2SimState simPigeon = new Pigeon2SimState(getPigeon2());
+    private SimSwerveDrivetrain simDrivetrain;// = new SimSwerveDrivetrain(getModuleLocations(), simPigeon, null)
 
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
@@ -157,7 +161,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
 
     // constructors
     public DrivetrainSubsystem(
-            Vision vision,
+           Vision vision,
             SwerveDrivetrainConstants drivetrainConstants,
             SwerveModuleConstants<?, ?, ?>... modules) {
         super(drivetrainConstants, modules);
@@ -202,48 +206,19 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
             Vision vision,
             CommandJoystick joystick,
             SwerveDrivetrainConstants drivetrainConstants,
+            //double odometryUpdateFrequency,
+            //Matrix<N3, N1> odometryStandardDeviation,
+            //Matrix<N3, N1> visionStandardDeviation,
             SwerveModuleConstants<?, ?, ?>... modules) {
-        super(drivetrainConstants, modules);
-        this.vision = vision;
-        if (Utils.isSimulation() || Utils.isReplay()) {
-            this.joystick = joystick;
-            SmartDashboard.putData("LED Viz", mech);
-            startSimThread();
-        }
-    }
-
-    //*Sim constructor */
-    public DrivetrainSubsystem(
-            Vision vision,
-            CommandJoystick joystick,
-            SwerveDrivetrainConstants drivetrainConstants,
-            double odometryUpdateFrequency,
-            SwerveModuleConstants<?, ?, ?>... modules) {
-        super(drivetrainConstants, odometryUpdateFrequency, modules);
-        this.vision = vision;
-        SmartDashboard.putData("LED Viz", mech);
-        if (Utils.isSimulation() || Utils.isReplay()) {
-            this.joystick = joystick;
-            startSimThread();
-        }
-    }
-
-    //*Sim constructor */
-    public DrivetrainSubsystem(
-            Vision vision,
-            CommandJoystick joystick,
-            SwerveDrivetrainConstants drivetrainConstants,
-            double odometryUpdateFrequency,
-            Matrix<N3, N1> odometryStandardDeviation,
-            Matrix<N3, N1> visionStandardDeviation,
-            SwerveModuleConstants<?, ?, ?>... modules) {
-        super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation,
+        super(drivetrainConstants, //odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation,
                 modules);
         this.vision = vision;
         if (Utils.isSimulation() || Utils.isReplay()) {
             this.joystick = joystick;
             SmartDashboard.putData("LED Viz", mech);
             startSimThread();
+            simDrivetrain = new SimSwerveDrivetrain(getModuleLocations(), simPigeon, modules);
+            
         }
     }
 
@@ -263,6 +238,9 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
     public Command autoStop() {
         return runOnce(() -> this.setControl(autoRobotDrive.withSpeeds(new ChassisSpeeds(0.0, 0.0, 0.0))));
     }
+
+    
+
 
     // // public Command setRobotSpeeds(double xSpeed, double ySpeed, double
     // rotSpeed) {

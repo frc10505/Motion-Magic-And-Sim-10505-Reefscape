@@ -49,7 +49,7 @@ public class AlgaeSubsystem extends SubsystemBase {
 
     // simulation of the PHYSICS of the mechanisms (this is what does the
     // calculations/makes the sim useful & cool)
-    private final SingleJointedArmSim pivotSim = new SingleJointedArmSim(DCMotor.getNEO(1), 80,
+    public final SingleJointedArmSim pivotSim = new SingleJointedArmSim(DCMotor.getNEO(1), 80,
             SingleJointedArmSim.estimateMOI(0.305, 2), 0.305, Units.degreesToRadians(-120), Units.degreesToRadians(120),
             true, Units.degreesToRadians(startingAngle));
 

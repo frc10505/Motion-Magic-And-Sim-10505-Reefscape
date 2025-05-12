@@ -10,7 +10,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
-import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team10505.robot.subsystems.DrivetrainSubsystem;
 import frc.team10505.robot.subsystems.ElevatorSubsystem;

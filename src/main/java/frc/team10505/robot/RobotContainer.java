@@ -13,9 +13,10 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -324,31 +325,41 @@ public class RobotContainer {
 
         }
 
-        public void updateVisionPose() {
-                vision.updateDashboard();
-                updatePose();
-                vision.updateViz(drivetrainSubsys.getState().Pose);
+        public void updateVisPose(){
+ //updateViz(latestVisionPose);
+                //vision.updateDashboard();
+                //updatePose();
+                //vision.updateViz(drivetrainSubsys.getState().Pose);
                 // if the camera has a tag in sight, it will calculate a pose and add to the
                 // drivetrain
 
-               
+            //    try{
+            //     simGetReefCamEstimatedPose();
+            //    }      
                 
-                             
-                try {
+            try {       
+                vision.simGetReefCamEstimatedPose().ifPresent(est -> {
+                        drivetrainSubsys.addVisionMeasurement(est.estimatedPose.toPose2d(),
+                                        est.timestampSeconds);
+                        SmartDashboard.putNumber("sim reef cam pose x", est.estimatedPose.toPose2d().getX());
+                        SmartDashboard.putNumber("sim reef cam pose y", est.estimatedPose.toPose2d().getY());
+                        SmartDashboard.putNumber("sim reef cam pose rot",
+                                        est.estimatedPose.toPose2d().getRotation().getDegrees());
+        });
 
-                       
-                        vision.simGetReefCamEstimatedPose().ifPresent(est -> {
-                                drivetrainSubsys.addVisionMeasurement(est.estimatedPose.toPose2d(),
-                                                est.timestampSeconds);
-                                SmartDashboard.putNumber("sim reef cam pose x", est.estimatedPose.toPose2d().getX());
-                                SmartDashboard.putNumber("sim reef cam pose y", est.estimatedPose.toPose2d().getY());
-                                SmartDashboard.putNumber("sim reef cam pose rot",
-                                                est.estimatedPose.toPose2d().getRotation().getDegrees());
-                });
-
-                } catch (Exception e) {
-                        Commands.print("reef cam pose failed");
-                }
+        } catch (Exception e) {
+                Commands.print("reef cam pose failed");
+        }                vision.updateViz(drivetrainSubsys.getState().Pose);
         }
+
+
+
+        public void updateBatterySim(){
+                RoboRioSim.setVInCurrent(BatterySim.calculateDefaultBatteryLoadedVoltage(
+                        simulation.getMechanismCurrentDrawAms()));
+
+
+        }
+       
 
 }

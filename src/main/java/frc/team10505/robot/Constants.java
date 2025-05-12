@@ -49,6 +49,11 @@ public final class Constants {
     public final static double ALGAE_PIVOT_GEARSTACK = 80;
   }
 
+  public class VisionConstants{
+    public final static String FRONT_CAM_NAME = "Front Cam";
+  }  
+
+
     public final static double rightDriveLaserDistance = 290.0;
     public final static double leftDriveLaserDistance = 290;
 
