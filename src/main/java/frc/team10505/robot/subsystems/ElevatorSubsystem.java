@@ -194,7 +194,7 @@ public class ElevatorSubsystem extends SubsystemBase {
             SmartDashboard.putNumber("Elevator follower set voltage", elevatorFollowerMotor.getMotorVoltage().getValueAsDouble());
             SmartDashboard.putNumber("Elevator Lead Motor Position", elevatorMotor.getPosition().getValueAsDouble());
             SmartDashboard.putNumber("Elevator Follower Motor Position", elevatorFollowerMotor.getPosition().getValueAsDouble());
-            SmartDashboard.putNumber("Elevator Lead Motor Rotor Position", elevatorMotor.getPosition().getValueAsDouble());
+            SmartDashboard.putNumber("Elevator Lead Motor Rotor Position", elevatorMotor.getRotorPosition().getValueAsDouble());
             SmartDashboard.putNumber("Elevator Follower Motor Rotor Position", elevatorFollowerMotor.getPosition().getValueAsDouble());
         }
 

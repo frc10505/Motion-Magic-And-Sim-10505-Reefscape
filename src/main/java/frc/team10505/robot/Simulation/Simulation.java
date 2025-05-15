@@ -1,4 +1,4 @@
-package frc.team10505.robot;
+package frc.team10505.robot.Simulation;
 
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.team10505.robot.libTypeStuff.Mech;
 import frc.team10505.robot.subsystems.AlgaeSubsystem;
 import frc.team10505.robot.subsystems.CoralSubsystem;
 import frc.team10505.robot.subsystems.ElevatorSubsystem;

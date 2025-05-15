@@ -28,6 +28,8 @@ import frc.team10505.robot.subsystems.ElevatorSubsystem;
 import frc.team10505.robot.generated.TunerConstants;
 import frc.team10505.robot.subsystems.AlgaeSubsystem;
 import frc.team10505.robot.subsystems.CoralSubsystem;
+import frc.team10505.robot.VisionStuff.Vision;
+import frc.team10505.robot.Simulation.Simulation;
 import static edu.wpi.first.units.Units.*;
 import static frc.team10505.robot.Constants.*;
 
@@ -338,6 +340,11 @@ public class RobotContainer {
         public void updateBatterySim() {
                 RoboRioSim.setVInCurrent(BatterySim.calculateDefaultBatteryLoadedVoltage(
                                 simulation.getMechanismCurrentDrawAms()));
+                SmartDashboard.putNumber("SIM RobotRio v in current", RoboRioSim.getVInCurrent());
+                SmartDashboard.putNumber("SIM RobotRio brownout voltage", RoboRioSim.getBrownoutVoltage());
+                SmartDashboard.putNumber("SIM RobotRio user current 6v", RoboRioSim.getUserCurrent6V());
+
+
         }
 
 }

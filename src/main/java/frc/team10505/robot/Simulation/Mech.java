@@ -1,8 +1,4 @@
-package frc.team10505.robot.libTypeStuff;
-
-import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
-import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
-import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
+package frc.team10505.robot.Simulation;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -105,5 +101,4 @@ public class Mech {
             publisher.set(pose);
         }
     }
-
 }

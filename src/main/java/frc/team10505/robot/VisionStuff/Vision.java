@@ -1,4 +1,4 @@
-package frc.team10505.robot;
+package frc.team10505.robot.VisionStuff;
 
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.VisionSystemSim;
@@ -7,7 +7,6 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.team10505.robot.libTypeStuff.Camera;
 import static frc.team10505.robot.Constants.VisionConstants.*;
 
 public class Vision {
@@ -35,7 +34,7 @@ public class Vision {
 
     public void updateViz(Pose2d pose) {
         fieldViz.setRobotPose(pose);
-    }
+    } 
 
     public void reset() {
         visionSim.clearAprilTags();

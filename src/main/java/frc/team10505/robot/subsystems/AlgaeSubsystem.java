@@ -58,8 +58,8 @@ public class AlgaeSubsystem extends SubsystemBase {
     /* Our constructor */
     public AlgaeSubsystem() {
         if (Utils.isSimulation() || Utils.isReplay()) {
-            pivotController = new PIDController(1.6, 0, 0.01);
-            pivotFeedforward = new ArmFeedforward(0, 0.1719, 0.4, 0.1);
+            pivotController = new PIDController(1.6, 0, 0.0);
+            pivotFeedforward = new ArmFeedforward(0, 0.1719, 0);//040, 040);
         } else {
             pivotController = new PIDController(0, 0, 0);// TODO TUNE IRL
             pivotFeedforward = new ArmFeedforward(0.01, 0.1, 0.4, 0.1);// TODO TUNE IRL
@@ -90,8 +90,13 @@ public class AlgaeSubsystem extends SubsystemBase {
     }
 
     public double getEffort() {
-        return pivotFeedforward.calculate(Units.degreesToRadians(getPivotEncoder()), 0)
+        if(Utils.isSimulation()){
+            return pivotFeedforward.calculateWithVelocities(Units.degreesToRadians(getPivotEncoder()), 0, 0)//TODO Mess with/figure out
+            + pivotController.calculate(getPivotEncoder(), pivotSetpoint);
+        }else {
+            return pivotFeedforward.calculate(Units.degreesToRadians(getPivotEncoder()), 0)
                 + pivotController.calculate(getPivotEncoder(), pivotSetpoint);
+        }
     }
 
     /* pivot commands to reference */

@@ -40,7 +40,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.team10505.robot.Vision;
+import frc.team10505.robot.VisionStuff.Vision;
 import frc.team10505.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 import static frc.team10505.robot.Constants.HardwareConstants.*;

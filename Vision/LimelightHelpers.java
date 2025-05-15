@@ -1,14 +1,12 @@
 //LimelightHelpers v1.11 (REQUIRES LLOS 2025.0 OR LATER)
 
-package frc.team10505.robot.Vision;
+package frc.team10505.robot;
 
 import edu.wpi.first.networktables.DoubleArrayEntry;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDoubleArray;
-import frc.team10505.robot.Vision.LimelightHelpers.LimelightResults;
-import frc.team10505.robot.Vision.LimelightHelpers.PoseEstimate;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -926,7 +924,7 @@ public class LimelightHelpers {
     /////
     /////
 
-    /**
+    /** 
      * Does the Limelight have a valid target?
      * @param limelightName Name of the Limelight camera ("" for default)
      * @return True if a valid target is present, false otherwise

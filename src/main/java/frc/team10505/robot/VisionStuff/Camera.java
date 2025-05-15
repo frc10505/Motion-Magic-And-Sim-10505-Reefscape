@@ -1,8 +1,7 @@
-package frc.team10505.robot.libTypeStuff;
+package frc.team10505.robot.VisionStuff;
 
 import java.util.Optional;
 
-import org.opencv.core.Size;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -18,16 +17,18 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Camera {
+public class Camera extends SubsystemBase {
     private final PhotonCamera camera;
     private final PhotonPoseEstimator poseEstimator;
     private PhotonCameraSim cameraSim;
     private SimCameraProperties simProperties;
     private String cameraName;
     private double latestPoseTimestamp = 0.0;
+    private PhotonPipelineResult latestResult = new PhotonPipelineResult();
 
-    /**NOT compatable with sim */
+    /** NOT compatable with sim */
     public Camera(String cameraName, int widthRes, int heightRes, double FOV, Transform3d robotToCam) {
         camera = new PhotonCamera(cameraName);
         poseEstimator = new PhotonPoseEstimator(AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded),
@@ -35,7 +36,7 @@ public class Camera {
         this.cameraName = cameraName;
     }
 
-    /**Compatable with sim */
+    /** Compatable with sim */
     public Camera(String cameraName, int widthRes, int heightRes, double FOV, Transform3d robotToCam,
             AprilTagFieldLayout tagLayout, double simLatency, double simLatencyStdDevsMs, double simFPS,
             double simCalibError, double simCalibErrorStdDevs, PoseStrategy poseStrat) {
@@ -62,60 +63,79 @@ public class Camera {
         Optional<EstimatedRobotPose> estimatedPose = Optional.empty();
 
         for (PhotonPipelineResult change : camera.getAllUnreadResults()) {
-            estimatedPose = poseEstimator.update(change);
-            latestPoseTimestamp = camera.getAllUnreadResults().get(camera.getAllUnreadResults().lastIndexOf(change)).getTimestampSeconds();
-        }       
-
+            estimatedPose = poseEstimator.update(latestResult);
+            latestPoseTimestamp = camera.getAllUnreadResults().get(camera.getAllUnreadResults().lastIndexOf(change))
+                    .getTimestampSeconds();
+        }
+        
         return estimatedPose;
     }
 
-    public double getTargetSkew() {
-        return camera.getAllUnreadResults().get(-1).getBestTarget().getSkew();
+    public double getTargetSkew(PhotonPipelineResult latestResult) {
+        return camera.getAllUnreadResults().get(camera.getAllUnreadResults().lastIndexOf(latestResult)).getBestTarget()
+                .getSkew();
     }
 
-    public double getTargetYaw() {
-        return camera.getAllUnreadResults().get(camera.getAllUnreadResults().lastIndexOf(camera.getAllUnreadResults())).getBestTarget().getYaw();
-        
+    public double getTargetYaw(PhotonPipelineResult latestResult) {
+        return camera.getAllUnreadResults().get(camera.getAllUnreadResults().lastIndexOf(latestResult))
+                .getBestTarget().getYaw();
+
     }
 
-    public double getTargetPitch() {
-        return camera.getAllUnreadResults().get(camera.getPipelineIndex()).getBestTarget().getPitch();
+    public double getTargetPitch(PhotonPipelineResult latestResult) {
+        return camera.getAllUnreadResults().get(camera.getAllUnreadResults().lastIndexOf(latestResult)).getBestTarget()
+                .getPitch();
     }
 
-    public PhotonCameraSim getCameraSim(){
+    public PhotonCameraSim getCameraSim() {
         return cameraSim;
     }
 
-    public Transform3d getTargetTransformation(PhotonPipelineResult change){
-        return camera.getAllUnreadResults().get(camera.getAllUnreadResults().lastIndexOf(change)).getBestTarget().bestCameraToTarget;
+    public Transform3d getTargetTransformation(PhotonPipelineResult latestResult) {
+            return camera.getAllUnreadResults().get(camera.getAllUnreadResults().lastIndexOf(latestResult))
+                    .getBestTarget().bestCameraToTarget;
     }
 
-    /**gives data to SmartDashboard for the estimated robot pose's x, y, and rotational values, and latest timestamp */
-    public void putRobotPoseValues(){
+    /**
+     * gives data to SmartDashboard for the estimated robot pose's x, y, and
+     * rotational values, and latest timestamp
+     */
+    public void putRobotPoseValues() {
         getEstimatedPose().ifPresent(est -> {
             SmartDashboard.putNumber(cameraName + " Est Robot Pose X", est.estimatedPose.toPose2d().getX());
             SmartDashboard.putNumber(cameraName + " Est Robot Pose Y", est.estimatedPose.toPose2d().getY());
-            SmartDashboard.putNumber(cameraName + " Est Robot Pose Rot", est.estimatedPose.toPose2d().getRotation().getDegrees());
+            SmartDashboard.putNumber(cameraName + " Est Robot Pose Rot",
+                    est.estimatedPose.toPose2d().getRotation().getDegrees());
             SmartDashboard.putNumber(cameraName + " Est Robot Pose Latest Timestamp", latestPoseTimestamp);
 
         });
     }
 
-    /**gives data to SmartDashboard for the best target's x, y, z, rot x, rot y, rot z, and fiducial id */
-    public void putTargetValues(){
-            for(PhotonPipelineResult change : camera.getAllUnreadResults()){
-                SmartDashboard.putNumber(cameraName + "target transform x",
-            getTargetTransformation(change).getX());            
-             SmartDashboard.putNumber(cameraName +" target transform y", getTargetTransformation(change).getY());
-            SmartDashboard.putNumber(cameraName +" target transform z", getTargetTransformation(change).getZ());
-            SmartDashboard.putNumber(cameraName +" target rotation x",
+    /**
+     * gives data to SmartDashboard for the best target's x, y, z, rot x, rot y, rot
+     * z, and fiducial id
+     */
+    public void putTargetValues() {
+        for (PhotonPipelineResult change : camera.getAllUnreadResults()) {
+            SmartDashboard.putNumber(cameraName + "target transform x",
+                    getTargetTransformation(change).getX());
+            SmartDashboard.putNumber(cameraName + " target transform y", getTargetTransformation(change).getY());
+            SmartDashboard.putNumber(cameraName + " target transform z", getTargetTransformation(change).getZ());
+            SmartDashboard.putNumber(cameraName + " target rotation x",
                     getTargetTransformation(change).getRotation().getX());
-            SmartDashboard.putNumber(cameraName +" target rotation y",
+            SmartDashboard.putNumber(cameraName + " target rotation y",
                     getTargetTransformation(change).getRotation().getY());
-            SmartDashboard.putNumber(cameraName +" target rotation z",
+            SmartDashboard.putNumber(cameraName + " target rotation z",
                     getTargetTransformation(change).getRotation().getZ());
-            SmartDashboard.putNumber(cameraName +" target ID",
+            SmartDashboard.putNumber(cameraName + " target ID",
                     camera.getAllUnreadResults().get(0).getBestTarget().fiducialId);
+        }
     }
-}
+
+    @Override
+    public void periodic() {
+        for (PhotonPipelineResult newResult : camera.getAllUnreadResults()) {
+            latestResult = newResult;
+        }
+    }
 }
