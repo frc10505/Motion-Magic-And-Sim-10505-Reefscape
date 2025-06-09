@@ -94,14 +94,14 @@ public class Simulation extends SubsystemBase {
 
         algaeMech.viz.setAngle(algaeSubsys.simPivotEncoder, new Rotation3d(0, algaeSubsys.simPivotEncoder, 0));
 
-        algaeMech.viz2.setAngle(algaeMech.viz2.getAngle() + algaeSubsys.intakeSpeed * 12, new Rotation3d(0, algaeMech.viz2.getAngle(), 0));
+        algaeMech.viz2.setAngle(algaeMech.viz2.getAngle() + algaeSubsys.intakeSpeed * 24, new Rotation3d(0, algaeMech.viz2.getAngle(), 0));
 
         algaeMech.viz2.setRoot((Math.cos(Units.degreesToRadians(algaeMech.viz.getAngle())) * 0.56) + 0.75,
         (Math.sin(Units.degreesToRadians(algaeMech.viz.getAngle())) * 0.56) + 0.75);
 
-        coralMech.viz.setAngle(coralMech.viz.getAngle() + intakeLeftSim.getAngularVelocityRPM() * 0.2, new Rotation3d(0, 0, coralMech.viz.getAngle()));
+        coralMech.viz.setAngle(coralMech.viz.getAngle() + intakeLeftSim.getAngularVelocityRPM() * 0.4, new Rotation3d(0, 0, coralMech.viz.getAngle()));
 
-        coralMech.viz2.setAngle(coralMech.viz2.getAngle() - intakeRightSim.getAngularVelocityRPM() * 0.2, new Rotation3d(0, 0, coralMech.viz2.getAngle()));
+        coralMech.viz2.setAngle(coralMech.viz2.getAngle() - intakeRightSim.getAngularVelocityRPM() * 0.4, new Rotation3d(0, 0, coralMech.viz2.getAngle()));
  
         if (coralSubsys.inSensor()) {
             coralMech.viz3.setColor(green);

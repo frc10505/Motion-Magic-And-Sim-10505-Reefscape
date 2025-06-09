@@ -10,6 +10,7 @@ import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -57,7 +58,7 @@ public class AlgaeSubsystem extends SubsystemBase {
     
     /* Our constructor */
     public AlgaeSubsystem() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             pivotController = new PIDController(1.6, 0, 0.0);
             pivotFeedforward = new ArmFeedforward(0, 0.1719, 0);//040, 040);
         } else {
@@ -82,7 +83,7 @@ public class AlgaeSubsystem extends SubsystemBase {
     // calculations
     /**returns the pivot's position in degrees */
     public double getPivotEncoder() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             return simPivotEncoder;
         } else {
             return (-pivotEncoder.getPosition() + absoluteOffset);
@@ -90,7 +91,7 @@ public class AlgaeSubsystem extends SubsystemBase {
     }
 
     public double getEffort() {
-        if(Utils.isSimulation()){
+        if(RobotBase.isSimulation()){
             return pivotFeedforward.calculateWithVelocities(Units.degreesToRadians(getPivotEncoder()), 0, 0)//TODO Mess with/figure out
             + pivotController.calculate(getPivotEncoder(), pivotSetpoint);
         }else {
@@ -182,7 +183,7 @@ public class AlgaeSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Pivot Calculated Effort", getEffort());
         SmartDashboard.putNumber("Algae Intake Speed", intakeSpeed);
 
-        if(!Utils.isSimulation()){
+        if(!RobotBase.isSimulation()){
             if (!coasting) {
                 pivotMotor.setVoltage(getEffort());
             }

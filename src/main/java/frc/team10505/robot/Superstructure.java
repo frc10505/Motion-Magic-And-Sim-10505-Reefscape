@@ -6,13 +6,15 @@
 
 package frc.team10505.robot;
 
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.team10505.robot.subsystems.DrivetrainSubsystem;
 import frc.team10505.robot.subsystems.ElevatorSubsystem;
+import frc.team10505.robot.subsystems.drive.DrivetrainSubsystem;
+import frc.team10505.robot.VisionStuff.Vision;
 import frc.team10505.robot.subsystems.AlgaeSubsystem;
 import frc.team10505.robot.subsystems.CoralSubsystem;
 import static frc.team10505.robot.Constants.*;
@@ -23,16 +25,22 @@ public class Superstructure {
     private AlgaeSubsystem algaeSubsys;
     private ElevatorSubsystem elevatorSubsys;
     private DrivetrainSubsystem drivetrainSubsys;
+    private Vision vision;
 
+    /**ONLY for use in AUTON */
     private final SwerveRequest.ApplyRobotSpeeds autoRobotDrive = new SwerveRequest.ApplyRobotSpeeds();
+    /**ONLY for use in TELEOP */
+    private SwerveRequest.RobotCentric robotDrive = new SwerveRequest.RobotCentric()
+                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
     /*Constructor */
     public Superstructure(CoralSubsystem coralSubsystem, AlgaeSubsystem algaeSubsystem, ElevatorSubsystem elevatorSubsystem,
-            DrivetrainSubsystem drivetrainSubsystem) {
+            DrivetrainSubsystem drivetrainSubsystem, Vision vision) {
         this.coralSubsys = coralSubsystem;
         this.algaeSubsys = algaeSubsystem;
         this.elevatorSubsys = elevatorSubsystem;
         this.drivetrainSubsys = drivetrainSubsystem;
+        this.vision = vision;
     }
 
     public Command intakeCoral() {
@@ -92,7 +100,26 @@ public class Superstructure {
                 algaeSubsys.stopIntake()
 
         );
+    }
 
+    private double driveSkew = 0;
+    private double driveYaw = 0;
+    private double drivePitch = 0;
+
+    public Command alignWithTarget(){
+   
+        return Commands.run(()->{
+            if(vision.frontCamera.camera.getAllUnreadResults().isEmpty()){
+                driveSkew = 0;
+                driveYaw = 0;
+                drivePitch = 0;
+            } else {
+               driveSkew = vision.frontCamera.latestSkew;
+               driveYaw = vision.frontCamera.latestYaw;
+               drivePitch = vision.frontCamera.latestPitch;
+            }
+            drivetrainSubsys.applyRequest(()-> robotDrive.withVelocityX(driveSkew).withVelocityY(driveYaw).withRotationalRate(drivePitch));
+        });
     }
 
     // public Command grabAlgae() {
@@ -151,7 +178,7 @@ public class Superstructure {
                 Commands.waitUntil(() -> elevatorSubsys.isNearGoal()),
                 coralSubsys.setIntake(CORAL_INTAKE_SPEED),//TODO figure out what the gaf is this .37? 
                 //NOTE are we stupid? probably....... :(
-                //other auto scores use .25,  and i think teleop l4 scoring uses 0.05
+                //other auto scores use .25,  and teleop l4 scoring uses 0.05
                 Commands.race(
                         Commands.waitUntil(() -> !coralSubsys.outSensor()), 
                         Commands.waitSeconds(1.2)));

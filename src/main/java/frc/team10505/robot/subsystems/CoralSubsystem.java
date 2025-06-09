@@ -1,5 +1,6 @@
 package frc.team10505.robot.subsystems;
 
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -65,7 +66,7 @@ public class CoralSubsystem extends SubsystemBase {
     /* Calculations */
     /** returns true if the laser reads a distance less than 50mm, or in sim, if joystick button 1 is pressed */
     public boolean inSensor() {
-        if (Utils.isSimulation()) {
+        if (RobotBase.isSimulation()) {
             return joystick.button(1).getAsBoolean();
         } else {
             LaserCan.Measurement inMeas = inLaser.getMeasurement();
@@ -75,7 +76,7 @@ public class CoralSubsystem extends SubsystemBase {
 
     /**returns true if the laser reads a distance less than 50mm, or in sim, if joystick button 2 is pressed*/
     public boolean outSensor() {
-        if (Utils.isSimulation()) {
+        if (RobotBase.isSimulation()) {
             return joystick.button(2).getAsBoolean();
         } else {
             LaserCan.Measurement outMeas = outLaser.getMeasurement();
@@ -148,7 +149,7 @@ public class CoralSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Secondary motor speed", secondaryMotorSpeed);
         SmartDashboard.putBoolean("inSensor", inSensor());
         SmartDashboard.putBoolean("outSensor", outSensor());
-        if (!Utils.isSimulation()) {
+        if (!RobotBase.isSimulation()) {
             SmartDashboard.putNumber("left intake motor applied output", intakeLeft.getAppliedOutput());
             SmartDashboard.putNumber("right intake motor applied output", intakeRight.getAppliedOutput());
         }

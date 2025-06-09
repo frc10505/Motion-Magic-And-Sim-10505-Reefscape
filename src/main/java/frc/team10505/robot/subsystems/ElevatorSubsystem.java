@@ -19,6 +19,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -48,7 +49,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     /* Constructor */
     public ElevatorSubsystem() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             elevatorMotor = new TalonFX(ELEVATOR_MOTOR_ID);
             elevatorFollowerMotor = new TalonFX(ELEVATOR_FOLLOWER_MOTOR_ID);
             motionMagicVoltage = new MotionMagicVoltage(startingHeight);// use starting position(position is
@@ -88,7 +89,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         Slot0Configs slot0 = cfg.Slot0;
 
         /* gains for pid and ffe */
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
 
             slot0.kS = 0.0; // counters static friction(there is none in a simulation)
             slot0.kV = 0.12; // for velocity /*KARTER - this number should ALWAYS BE LOW */
@@ -153,7 +154,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     /* Calculations */
     public double getElevatorEncoder() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             return simElevEncoder;//elevSim.getPositionMeters();
         } else {
             return (elevatorMotor.getRotorPosition().getValueAsDouble() * (Math.PI * 1.751 * 2) / 12.0) * -1.0;
@@ -188,8 +189,10 @@ public class ElevatorSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Elevator Encoder", getElevatorEncoder());
         SmartDashboard.putNumber("Elevator Height", height);
         SmartDashboard.putNumber("change", change);
+        SmartDashboard.putNumber("Elevator set voltage", elevatorMotor.getMotorVoltage().getValueAsDouble());
 
-        if (!Utils.isSimulation()) {
+
+        if (!RobotBase.isSimulation()) {
             SmartDashboard.putNumber("Elevator set voltage", elevatorMotor.getMotorVoltage().getValueAsDouble());
             SmartDashboard.putNumber("Elevator follower set voltage", elevatorFollowerMotor.getMotorVoltage().getValueAsDouble());
             SmartDashboard.putNumber("Elevator Lead Motor Position", elevatorMotor.getPosition().getValueAsDouble());

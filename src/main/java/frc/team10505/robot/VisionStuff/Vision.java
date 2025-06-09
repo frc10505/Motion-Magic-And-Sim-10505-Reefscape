@@ -18,12 +18,13 @@ public class Vision {
 
     private final Field2d fieldViz = visionSim.getDebugField();
 
-    public final Camera frontCamera = new Camera(FRONT_CAM_NAME, FRONT_CAM_WIDTH_RES, FRONT_CAM_HEIGHT_RES, FRONT_CAM_FOV_DEG, FRONT_CAM_TO_ROBOT, kFieldLayout, 35, 5, 20, 0.25, 0.08, PoseStrategy.LOWEST_AMBIGUITY);
-    
-    public final Camera backCamera = new Camera(BACK_CAM_NAME, BACK_CAM_WIDTH_RES, BACK_CAM_HEIGHT_RES, BACK_CAM_FOV_DEG, BACK_CAM_TO_ROBOT, kFieldLayout, 35, 5, 20, 0.25, 0.08, PoseStrategy.LOWEST_AMBIGUITY);
-    
-    
-    public Vision(){
+    public final Camera frontCamera = new Camera(FRONT_CAM_NAME, FRONT_CAM_WIDTH_RES, FRONT_CAM_HEIGHT_RES,
+            FRONT_CAM_FOV_DEG, FRONT_CAM_TO_ROBOT, kFieldLayout, 35, 5, 20, 0.25, 0.08, PoseStrategy.LOWEST_AMBIGUITY);
+
+    public final Camera backCamera = new Camera(BACK_CAM_NAME, BACK_CAM_WIDTH_RES, BACK_CAM_HEIGHT_RES,
+            BACK_CAM_FOV_DEG, BACK_CAM_TO_ROBOT, kFieldLayout, 35, 5, 20, 0.25, 0.08, PoseStrategy.LOWEST_AMBIGUITY);
+
+    public Vision() {
         // sim stuff
         visionSim.addAprilTags(kFieldLayout);
         visionSim.addCamera(frontCamera.getCameraSim(), FRONT_CAM_TO_ROBOT);
@@ -33,8 +34,10 @@ public class Vision {
     }
 
     public void updateViz(Pose2d pose) {
-        fieldViz.setRobotPose(pose);
-    } 
+        // fieldViz.setRobotPose(pose);
+        visionSim.update(pose);
+        visionSim.getDebugField();
+    }
 
     public void reset() {
         visionSim.clearAprilTags();
@@ -42,10 +45,14 @@ public class Vision {
     }
 
     public void updateDashboard() {
-        frontCamera.putRobotPoseValues();
-        frontCamera.putTargetValues();
-        backCamera.putRobotPoseValues();
-        backCamera.putTargetValues();
+        try {
+            frontCamera.putRobotPoseValues();
+            frontCamera.putTargetValues();
+            backCamera.putRobotPoseValues();
+            backCamera.putTargetValues();
+        } catch (Exception ex) {
+            SmartDashboard.putString("Errors", "Updating vision dashboard failed!");
+        }
     }
 
 }

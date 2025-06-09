@@ -14,6 +14,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -23,9 +24,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.team10505.robot.subsystems.DrivetrainSubsystem;
 import frc.team10505.robot.subsystems.ElevatorSubsystem;
-import frc.team10505.robot.generated.TunerConstants;
+import frc.team10505.robot.subsystems.drive.DrivetrainSubsystem;
+import frc.team10505.robot.subsystems.drive.generated.TunerConstants;
 import frc.team10505.robot.subsystems.AlgaeSubsystem;
 import frc.team10505.robot.subsystems.CoralSubsystem;
 import frc.team10505.robot.VisionStuff.Vision;
@@ -67,14 +68,14 @@ public class RobotContainer {
         private Simulation simulation;
 
         /* Superstructure */
-        private final Superstructure superStructure;
+        private final Superstructure superstructure;
         /* Autonomous */
         private final SendableChooser<Command> svsuAutoChooser;
 
         private final SendableChooser<Double> polarityChooser = new SendableChooser<>();
 
         public RobotContainer() {
-                if (Utils.isSimulation() || Utils.isReplay()) {
+                if (RobotBase.isSimulation()) {
                         joystick = new CommandJoystick(0);
                         joystick2 = new CommandJoystick(1);
                         joystick3 = new CommandJoystick(2);
@@ -90,8 +91,8 @@ public class RobotContainer {
                         coralSubsys = new CoralSubsystem();
                 }
 
-                superStructure = new Superstructure(coralSubsys, algaeSubsys, elevatorSubsys,
-                                drivetrainSubsys);
+                superstructure = new Superstructure(coralSubsys, algaeSubsys, elevatorSubsys,
+                                drivetrainSubsys, vision);
 
                 // commands registered to pathplanner
                 NamedCommands.registerCommand("Test", Commands.print("auto command stuff is working"));
@@ -101,31 +102,31 @@ public class RobotContainer {
                 NamedCommands.registerCommand("setElevTo24", elevatorSubsys.setHeight(ELEV_L3));
                 NamedCommands.registerCommand("setElevTo48/5", elevatorSubsys.setHeight(ELEV_L4));
 
-                NamedCommands.registerCommand("autoScoreCoralL4", superStructure.autoScoreCoralL4());
-                NamedCommands.registerCommand("autoScoreCoralL2", superStructure.autoScoreCoralL2());
-                NamedCommands.registerCommand("autoScoreCoralL1", superStructure.autoScoreCoralL1());
+                NamedCommands.registerCommand("autoScoreCoralL4", superstructure.autoScoreCoralL4());
+                NamedCommands.registerCommand("autoScoreCoralL2", superstructure.autoScoreCoralL2());
+                NamedCommands.registerCommand("autoScoreCoralL1", superstructure.autoScoreCoralL1());
 
-                NamedCommands.registerCommand("autoL4Bump", superStructure.autoL4Bump());
+                NamedCommands.registerCommand("autoL4Bump", superstructure.autoL4Bump());
 
-                NamedCommands.registerCommand("intakeCoral", superStructure.intakeCoral());
-                NamedCommands.registerCommand("dropCoral", superStructure.dropCoral());
+                NamedCommands.registerCommand("intakeCoral", superstructure.intakeCoral());
+                NamedCommands.registerCommand("dropCoral", superstructure.dropCoral());
 
-                NamedCommands.registerCommand("svsuAutoAlignLeft", superStructure.autoAlignLeft());
-                NamedCommands.registerCommand("svsuAutoAlignRight", superStructure.autoAlignRight());
+                NamedCommands.registerCommand("svsuAutoAlignLeft", superstructure.autoAlignLeft());
+                NamedCommands.registerCommand("svsuAutoAlignRight", superstructure.autoAlignRight());
 
                 NamedCommands.registerCommand("raisinPivot", algaeSubsys.setAngle(10));
                 NamedCommands.registerCommand("setAlgaeIntake", (algaeSubsys.setIntake(0.5)));
                 NamedCommands.registerCommand("stopAlgaeIntake", (algaeSubsys.stopIntake()));
 
-                NamedCommands.registerCommand("autoBombsAway", superStructure.autonBombsAway());
-                NamedCommands.registerCommand("autonDetonateFirst", superStructure.autonDetonateFirst());
-                NamedCommands.registerCommand("autonDetonateSecond", superStructure.autonDetonateSecond());
-                NamedCommands.registerCommand("autonDetonateThird", superStructure.autonDetonateThird());
+                NamedCommands.registerCommand("autoBombsAway", superstructure.autonBombsAway());
+                NamedCommands.registerCommand("autonDetonateFirst", superstructure.autonDetonateFirst());
+                NamedCommands.registerCommand("autonDetonateSecond", superstructure.autonDetonateSecond());
+                NamedCommands.registerCommand("autonDetonateThird", superstructure.autonDetonateThird());
                 NamedCommands.registerCommand("autonRegurgitateAlgaeFirst",
-                                superStructure.autonRegurgitateAlgaeFirst());
+                                superstructure.autonRegurgitateAlgaeFirst());
                 NamedCommands.registerCommand("autonRegurgitateAlgaeSecond",
-                                superStructure.autonRegurgitateAlgaeSecond());
-                NamedCommands.registerCommand("autonTakeCover", superStructure.autonTakeCover());
+                                superstructure.autonRegurgitateAlgaeSecond());
+                NamedCommands.registerCommand("autonTakeCover", superstructure.autonTakeCover());
 
                 drivetrainSubsys.configPathplanner();
 
@@ -148,7 +149,7 @@ public class RobotContainer {
          * commands for the subsytems.
          */
         private void configDefaultCommands() {
-                if (Utils.isSimulation() || Utils.isReplay()) {
+                if (RobotBase.isSimulation()) {
 
                         drivetrainSubsys.setDefaultCommand(drivetrainSubsys.applyRequest(() -> drive
                                         .withVelocityX(-xboxController.getLeftX() * polarityChooser.getSelected()
@@ -175,15 +176,16 @@ public class RobotContainer {
          */
         private void configButtonBindings() {
 
-                if (Utils.isSimulation() || Utils.isReplay()) {
-                        // joystick.button(1).onTrue(superStructure.seekLeftIntakeStation());
+                if (RobotBase.isSimulation()) {
+                        // joystick.button(1).onTrue(superstructure.seekLeftIntakeStation());
                         joystick.button(1).onTrue(elevatorSubsys.setHeight(0));
                         joystick.button(2).onTrue(elevatorSubsys.setHeight(0.15));
                         joystick.button(3).onTrue(elevatorSubsys.setHeight(0.3));
                         joystick.button(4).onTrue(elevatorSubsys.setHeight(0.5));
 
-                        joystick2.button(1).whileTrue(superStructure.intakeCoral());
-                        joystick2.button(3).whileTrue(coralSubsys.runIntake(-CORAL_INTAKE_SPEED));
+                        joystick2.button(1).onTrue(superstructure.intakeCoral());
+                        joystick2.button(2).whileTrue(superstructure.alignWithTarget());
+                        joystick2.button(3).whileTrue(coralSubsys.runIntake(CORAL_INTAKE_SPEED));
                         joystick2.button(4).whileTrue(coralSubsys.runIntake(CORAL_OUTTAKE_SPEED));
 
                         joystick3.button(1).onTrue(algaeSubsys.setAngle(ALGAE_PIVOT_DOWN));
@@ -199,8 +201,8 @@ public class RobotContainer {
                         xboxController.leftBumper().onTrue(algaeSubsys.setIntake(-ALGAE_INTAKE_NORMAL_SPEED))
                                         .onFalse(algaeSubsys.stopIntake());
                         xboxController.rightBumper().onTrue(algaeSubsys.setIntake(ALGAE_INTAKE_NORMAL_SPEED))
-                                        .onFalse(superStructure.holdAlgae());
-                        // xboxController.povDown().onTrue(superStructure.grabAlgae()).onFalse(superStructure.holdAlgae());
+                                        .onFalse(superstructure.holdAlgae());
+                        // xboxController.povDown().onTrue(superstructure.grabAlgae()).onFalse(superstructure.holdAlgae());
 
                         xboxController.leftTrigger()
                                         .whileTrue(drivetrainSubsys.applyRequest(() -> drive
@@ -262,21 +264,21 @@ public class RobotContainer {
                                                         .until(() -> !drivetrainSubsys.seesRightSensor()));
 
                         // operator bindings
-                        xboxController2.povUp().onTrue(superStructure.outputTopCoral());
-                        xboxController2.povDown().onTrue(superStructure.intakeCoral());// .onFalse(coralSubsys.stop());
-                        xboxController2.povLeft().whileTrue(superStructure.outputCoral());
-                        xboxController2.povRight().whileTrue(superStructure.outputCoralTrough());
+                        xboxController2.povUp().onTrue(superstructure.outputTopCoral());
+                        xboxController2.povDown().onTrue(superstructure.intakeCoral());// .onFalse(coralSubsys.stop());
+                        xboxController2.povLeft().whileTrue(superstructure.outputCoral());
+                        xboxController2.povRight().whileTrue(superstructure.outputCoralTrough());
 
                         xboxController2.x().onTrue(elevatorSubsys.setHeight(ELEV_DOWN));
                         xboxController2.a().onTrue(elevatorSubsys.setHeight(ELEV_L2));
                         xboxController2.b().onTrue(elevatorSubsys.setHeight(ELEV_L3));
                         xboxController2.y().onTrue(elevatorSubsys.setHeight(ELEV_L4));
-                        xboxController2.rightBumper().onTrue(superStructure.manualL4Bump());
+                        xboxController2.rightBumper().onTrue(superstructure.manualL4Bump());
 
                         // nootont
-                        xboxController2.rightTrigger().onTrue(superStructure.bombsAway());
-                        xboxController2.leftBumper().onTrue(superStructure.detonate());
-                        xboxController2.leftTrigger().onTrue(superStructure.takeCover());
+                        xboxController2.rightTrigger().onTrue(superstructure.bombsAway());
+                        xboxController2.leftBumper().onTrue(superstructure.detonate());
+                        xboxController2.leftTrigger().onTrue(superstructure.takeCover());
 
                         // automoatically added from the CTRE generated swerve drive
                         // probably is important?

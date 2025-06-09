@@ -1,4 +1,4 @@
-package frc.team10505.robot.subsystems;
+package frc.team10505.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -35,13 +35,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.team10505.robot.VisionStuff.Vision;
-import frc.team10505.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.team10505.robot.subsystems.drive.generated.TunerConstants.TunerSwerveDrivetrain;
 
 import static frc.team10505.robot.Constants.HardwareConstants.*;
 import static frc.team10505.robot.Constants.*;
@@ -164,7 +165,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
             SwerveModuleConstants<?, ?, ?>... modules) {
         super(drivetrainConstants, modules);
         this.vision = vision;
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             startSimThread();
             SmartDashboard.putData("LED Viz", mech);
         }
@@ -177,7 +178,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
             SwerveModuleConstants<?, ?, ?>... modules) {
         super(drivetrainConstants, odometryUpdateFrequency, modules);
         this.vision = vision;
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             startSimThread();
             SmartDashboard.putData("LED Viz", mech);
         }
@@ -193,7 +194,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
         super(drivetrainConstants, odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation,
                 modules);
         this.vision = vision;
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             startSimThread();
             SmartDashboard.putData("LED Viz", mech);
         }
@@ -211,7 +212,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
         super(drivetrainConstants, //odometryUpdateFrequency, odometryStandardDeviation, visionStandardDeviation,
                 modules);
         this.vision = vision;
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             this.joystick = joystick;
             SmartDashboard.putData("LED Viz", mech);
             startSimThread();
@@ -325,7 +326,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
     }
 
     public boolean seesLeftSensor() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             return joystick.button(3).getAsBoolean();
 
         } else {
@@ -342,7 +343,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
     }
 
     public boolean seesRightSensor() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             return joystick.button(4).getAsBoolean();
 
         } else {
@@ -359,7 +360,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
     }
 
     public boolean autonSeesLeftSensor() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             return joystick.button(3).getAsBoolean();
 
         } else {
@@ -376,7 +377,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
     }
 
     public boolean autonSeesRightSensor() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             return joystick.button(4).getAsBoolean();
 
         } else {
@@ -393,7 +394,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
     }
 
     public boolean seesLeftSensorClose() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             return joystick.button(3).getAsBoolean();
 
         } else {
@@ -410,7 +411,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
     }
 
     public boolean seesRightSensorClose() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             return joystick.button(4).getAsBoolean();
 
         } else {
@@ -453,7 +454,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
         SmartDashboard.putBoolean("left drive sensor", seesLeftSensor());
         SmartDashboard.putBoolean("right drive sensor", seesRightSensor());
 
-        if (Utils.isSimulation()) {
+        if (RobotBase.isSimulation()) {
             if (seesLeftSensorClose() && seesRightSensorClose()) {
                 if(blueOn){
                     blueOn = false;
@@ -522,7 +523,7 @@ public class DrivetrainSubsystem extends TunerSwerveDrivetrain implements Subsys
     }
 
     public void configPathplanner() {
-        if (Utils.isSimulation() || Utils.isReplay()) {
+        if (RobotBase.isSimulation()) {
             try {
                 var config = RobotConfig.fromGUISettings();
 

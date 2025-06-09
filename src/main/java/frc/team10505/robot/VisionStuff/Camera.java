@@ -10,23 +10,27 @@ import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.targeting.PhotonPipelineResult;
 
-import com.ctre.phoenix6.Utils;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Camera extends SubsystemBase {
-    private final PhotonCamera camera;
+    public final PhotonCamera camera;
     private final PhotonPoseEstimator poseEstimator;
     private PhotonCameraSim cameraSim;
     private SimCameraProperties simProperties;
     private String cameraName;
     private double latestPoseTimestamp = 0.0;
     private PhotonPipelineResult latestResult = new PhotonPipelineResult();
+
+    public double latestSkew = 0;
+    public double latestYaw = 0;
+    public double latestPitch = 0;
+
 
     /** NOT compatable with sim */
     public Camera(String cameraName, int widthRes, int heightRes, double FOV, Transform3d robotToCam) {
@@ -41,11 +45,12 @@ public class Camera extends SubsystemBase {
             AprilTagFieldLayout tagLayout, double simLatency, double simLatencyStdDevsMs, double simFPS,
             double simCalibError, double simCalibErrorStdDevs, PoseStrategy poseStrat) {
 
-        if (Utils.isSimulation()) {
+        camera = new PhotonCamera(cameraName);
+        if (RobotBase.isSimulation()) {
             cameraSim = new PhotonCameraSim(new PhotonCamera(cameraName));
-            camera = cameraSim.getCamera();
+            //camera = cameraSim.getCamera();
         } else {
-            camera = new PhotonCamera(cameraName);
+            //camera = new PhotonCamera(cameraName);
         }
         poseEstimator = new PhotonPoseEstimator(tagLayout, poseStrat, robotToCam);
         simProperties = new SimCameraProperties();
@@ -129,6 +134,10 @@ public class Camera extends SubsystemBase {
                     getTargetTransformation(change).getRotation().getZ());
             SmartDashboard.putNumber(cameraName + " target ID",
                     camera.getAllUnreadResults().get(0).getBestTarget().fiducialId);
+
+            latestPitch = getTargetPitch(change);
+            latestSkew = getTargetSkew(change);
+            latestYaw = getTargetYaw(change);
         }
     }
 
