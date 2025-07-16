@@ -21,7 +21,7 @@ public class Robot extends TimedRobot {
   private Command autonomousCommand;
 
   public Robot() {
-    CanBridge.runTCP();
+    CanBridge.runTCP();// Laser can initialization
   }
 
   @Override
@@ -30,16 +30,15 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
-   Threads.setCurrentThreadPriority(true, 99);
+    //Threads.setCurrentThreadPriority(true, 99);// sets priority high
     CommandScheduler.getInstance().run();
     robotContainer.updatePoseValues();
 
+    //Threads.setCurrentThreadPriority(false, 10);//sets priority low (More likely to skip to avoid overruns)
     if (Utils.isSimulation()) {
       robotContainer.updateVision();
       robotContainer.updateBatterySim();
     }
-
-   Threads.setCurrentThreadPriority(false, 10);
   }
 
   @Override
@@ -74,7 +73,8 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void testInit() {
+  public void testInit() {//NON STANDARD testInit() ***DO NOT USE IN CODE BEYOND SIM*****
+    //allows us to run autons while having joystick inputs - helpful to allow us to have sim booleans that are for laser cans irl
     CommandScheduler.getInstance().cancelAll();
     if (Utils.isSimulation()) {
       autonomousCommand = robotContainer.getAutonomousCommand();

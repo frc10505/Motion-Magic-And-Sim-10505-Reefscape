@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+/**Utility class to create a photon camera compatable with sim */
 public class Camera extends SubsystemBase {
     public final PhotonCamera camera;
     private final PhotonPoseEstimator poseEstimator;
@@ -45,12 +46,12 @@ public class Camera extends SubsystemBase {
             AprilTagFieldLayout tagLayout, double simLatency, double simLatencyStdDevsMs, double simFPS,
             double simCalibError, double simCalibErrorStdDevs, PoseStrategy poseStrat) {
 
-        camera = new PhotonCamera(cameraName);
+        //camera = new PhotonCamera(cameraName);
         if (RobotBase.isSimulation()) {
             cameraSim = new PhotonCameraSim(new PhotonCamera(cameraName));
-            //camera = cameraSim.getCamera();
+            camera = cameraSim.getCamera();
         } else {
-            //camera = new PhotonCamera(cameraName);
+            camera = new PhotonCamera(cameraName);
         }
         poseEstimator = new PhotonPoseEstimator(tagLayout, poseStrat, robotToCam);
         simProperties = new SimCameraProperties();
@@ -105,7 +106,7 @@ public class Camera extends SubsystemBase {
      * gives data to SmartDashboard for the estimated robot pose's x, y, and
      * rotational values, and latest timestamp
      */
-    public void putRobotPoseValues() {
+    public void  putRobotPoseValues() {
         getEstimatedPose().ifPresent(est -> {
             SmartDashboard.putNumber(cameraName + " Est Robot Pose X", est.estimatedPose.toPose2d().getX());
             SmartDashboard.putNumber(cameraName + " Est Robot Pose Y", est.estimatedPose.toPose2d().getY());
@@ -114,6 +115,11 @@ public class Camera extends SubsystemBase {
             SmartDashboard.putNumber(cameraName + " Est Robot Pose Latest Timestamp", latestPoseTimestamp);
 
         });
+        
+        if(getEstimatedPose().isEmpty()){
+             SmartDashboard.putString("Errors", cameraName + " est pose is empty!");
+        
+        }
     }
 
     /**

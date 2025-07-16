@@ -51,7 +51,7 @@ public class Vision {
             backCamera.putRobotPoseValues();
             backCamera.putTargetValues();
         } catch (Exception ex) {
-            SmartDashboard.putString("Errors", "Updating vision dashboard failed!");
+            //SmartDashboard.putString("Errors", "Updating vision dashboard failed!");
         }
     }
 
